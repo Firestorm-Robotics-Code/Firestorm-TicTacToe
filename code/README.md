@@ -14,7 +14,7 @@ The preprocessor command for including a file is #include "filename_here". For i
 You can open this directory like any other arduino project - just navigate to the project and open up logic.ino.
 
 ## Operating system concerns:
-* Windows users - Windows is, undeniably (you could also deny it, if you want to) the 2nd worst operating system for coding. Arduino will be doable on a Windows, but if you can use Linux or Mac.
+* Windows users - Windows is, undeniably (you could also deny it, if you want to) the 2nd worst operating system for coding. Arduino will be doable on a Windows, but if you can use Linux or Mac, do.
 * ChromeOS users - ChromeOS is the worst operating system for coders because it doesn't have arduino.
 * Mac users - Mac gives a half-best-of-both-worlds experience - Its a mainstream OS but you still have a bit of coding ability with it. Not terrible, but not open source either.
 * Linux users - Using linux makes you one step short of a god. Keep up the good work.
