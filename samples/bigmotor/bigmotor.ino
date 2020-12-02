@@ -5,8 +5,8 @@
 #define REVLEN 1600 // Revolution length
 #define SPC 10 // Steps per centimeter, metric system is better bc base-10
 
-#define PULPIN 5 // Pulse on this theoretically tells the motor to rotate one step.
-#define DIRPIN 9 // Sets the direction - probably also with a pulse.
+#define PULPIN 4 // Pulse on this theoretically tells the motor to rotate one step.
+#define DIRPIN 11 // Sets the direction - probably also with a pulse.
 
 AccelStepper stepper(1, PULPIN, DIRPIN); // Create an object of the AccelStepper class, and call it stepper. The 1 specifies a two-pin control signal - direction and step.
 // The PULPIN is the step pin, and DIRPIN is the direction.
