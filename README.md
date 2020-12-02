@@ -5,6 +5,7 @@ Arduino code and documentation for Firestorm Robotics's tic-tac-toe board
 ## For Arduino samples (motor control, logic, etc) use the samples directory from the main branch.
 ## If you find a good link to an article/tutorial/documentation, add it in the documentation section in this file (README.md)
 ## If you find good wiring diagrams, add them to the wiring_diagrams directory in the main branch
+## And of course, for actual source code, use the code directory. Lets try and keep this multifile, where each file's job is to do one thing and thats it, to avoid wonky github. Its absolutely evil when github wonks.
 
 BTW, this was written in Markdown. Github flavoured markdown information [here](https://docs.github.com/en/free-pro-team@latest/github/writing-on-github).
 
