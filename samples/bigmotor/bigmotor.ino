@@ -12,18 +12,18 @@ AccelStepper stepper(1, PULPIN, DIRPIN); // Create an object of the AccelStepper
 // The PULPIN is the step pin, and DIRPIN is the direction.
 
 void setup() {
-  stepper.setMaxSpeed(1600); // Set the maximum speed for the stepper, in steps per second.
-  stepper.setSpeed(800); // Set the speed of the stepper, in steps per second. Thus, one second full rotation.
+  stepper.setMaxSpeed(400); // Set the maximum speed for the stepper, in steps per second.
+  stepper.setSpeed(400); // Set the speed of the stepper, in steps per second. Thus, one second full rotation.
   stepper.setAcceleration(1400); // Set the acceleration speed of the stepper.
-  stepper.moveTo(0);
-  stepper.runToPosition();
-  stepper.moveTo(1600); // Move to an absolute position - 0, to reset the stepper.
-  stepper.runToPosition(); // One full rotation of the stepper - blocking.
+  //stepper.moveTo(0);
+  //stepper.runToPosition();
+  //stepper.moveTo(1600); // Move to an absolute position - 0, to reset the stepper.
+  //stepper.runToPosition(); // One full rotation of the stepper - blocking.
 }
 
 void loop() {
-  stepper.move(100);
-  stepper.run(); // Run at the speed specified earlier.
+  //stepper.move(1600);
+  stepper.runSpeed(); // Run at the speed specified earlier.
 }
 
 // There are a few other commands in the stepper library, all of which are detailed in the documentation: https://www.pjrc.com/teensy/td_libs_AccelStepper.html
