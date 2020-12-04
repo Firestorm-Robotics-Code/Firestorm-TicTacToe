@@ -2,7 +2,7 @@
 
 #include <AccelStepper.h> // This is an include - AccelStepper.h is an external library. You'll need to use the library manager to install it. (Google).
 
-#define REVLEN 1600 // Revolution length
+#define REVLEN 1600 // Revolution length. We have SW5 on, so its actually 12800 - but I'll need to talk to Andrew Cua about that one.
 #define SPC 10 // Steps per centimeter, metric system is better bc base-10
 
 #define PULPIN 4 // Pulse on this theoretically tells the motor to rotate one step.
