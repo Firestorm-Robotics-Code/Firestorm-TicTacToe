@@ -1,20 +1,22 @@
-// This is an alternative to AccelStepper, which will be specifically tailored to our needs. I hope to use this instead and save us a lot of storage space on the Arduino.
+#include <Arduino.h>
+
+// This is an alternative to AccelStepper, which will be specifically tailored to our needs. We will use this instead as it is less than 100 lines and very effecient - It worked on the first try (after I corrected a few type errors and included arduino.h)
 
 // Need to verify that this code works
 
 class Motor{ // Reserve the class name Motor. Redefinition will wonk.
   public:
-    long pos; // Long allows for very large position values, with a signed 32 bits. If it seems small, consider how long you could live on 2 billion dollars. (hint: you could spend 1000 dollars a day for around five thousand five hundred years - from the biblical start of the universe to Shakespearean times. You could buy Moses a yacht to make his journey across the ocean easier, and then get front row seats to Hamlet. 
+    long pos = 0; // Long allows for very large position values, with a signed 32 bits. If it seems small, consider how long you could live on 2 billion dollars. (hint: you could spend 1000 dollars a day for around five thousand five hundred years - from the biblical start of the universe to Shakespearean times. You could buy Moses a yacht to make his journey across the ocean easier, and then get front row seats to Hamlet. 
     
-    long goal; // Same
+    long goal = 0; // Same
     
-    bool curdir; // Bool is the most effecient type because it theoretically only uses 1 bit. I'm not sure how this plays out as far as memory is concerned, but it at least uses less space than the barbarous 16-bit integer.
+    bool curdir = false; // Bool is the most effecient type because it theoretically only uses 1 bit. I'm not sure how this plays out as far as memory is concerned, but it at least uses less space than the barbarous 16-bit integer.
 
-    int8_t dirpin; // 8 bits, which is the smallest integer type, and signed which should speed up processing - probably. I believe unsigned is a slower wrapper around signed.
+    int dirpin; 
     
-    int8_t pulpin;
+    int pulpin;
     
-    int8_t stage=0;
+    int stage=0;
     
     unsigned int speed = 1000; // Speed is in steps per second.
     
