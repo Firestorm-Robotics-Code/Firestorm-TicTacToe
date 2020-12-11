@@ -31,7 +31,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       pinMode(dir,OUTPUT); // No timer controls on direction, which could eventually be a problem as 
     }
     
-    int getDistance(){ // Return the distance to the goal
+    long getDistance(){ // Return the distance to the goal
       return goal - pos;
     }
     
@@ -39,7 +39,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       speed=newspeed;
     }
     
-    void setGoal(int newgoal){
+    void setGoal(long newgoal){
       goal = newgoal;
     }
     
@@ -73,7 +73,8 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
 
       if (stage == 2 && (micros() - lastMicrosPul) > 500000/speed){ // Convert speed in steps per second to minimum time between steps. Real minimum step length is whatever this is plus 8 (in microseconds).
         stage = 0;
-        pos ++;
+        pos += (curdir ? 1 : -1); // Ternary. If current direction is true (forwards), add one to position. If current direction is false (backwards), subtract one from position.
+        // This caused an issue when, confronted with a negative goal, it went on forever: because position was increasing away from goal, rather than decreasing to it.
       }
     }
 }; // This class is very minimal. It doesn't have the charm (and extra logic) of AccelStepper, but I hope we will build on it.
