@@ -4,13 +4,11 @@ Add more files as it becomes necessary - Every file should do one thing only.
 
 `code.ino` is a pulling-it-all-together file. Its also what you open in Arduino IDE, and should not contain any logic or anything but calls to the other files.
 
-`grid.ino` should depend on motorcontroller.ino, and give an api for moving the screws to any point on the tic tac toe board. `constants.h` should contain rotations-per-centimeter and other such information.
+`grid.ino` should depend on `motor.ino`, and give an api for moving the screws to any point on the tic tac toe board. `constants.h` should contain rotations-per-centimeter and other such information.
 
 `logic.ino` should contain the Tic Tac Toe logic. Should depend on `grid.ino` for moving things.
 
-`motor.ino` should contain code for controlling a two-wire motor. This will eventually be used in preference to AccelStepper.
-
-`motorcontroller.ino` should contain a middleman class for motor control, depending on `motor.ino`. None of the other files should ever depend on `motor.ino`
+`motor.ino` should contain code for controlling a two-wire motor. This will be used in preference to AccelStepper.
 
 `constants.h` should contain only preprocessor commands (#define and other hashtag things).
 
