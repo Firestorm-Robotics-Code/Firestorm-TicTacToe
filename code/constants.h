@@ -14,3 +14,5 @@
 #define GRIDSTART_Y SQUARESIZE // See above
 
 #define ONE_INCH_ROTATIONS 8000
+
+#define TRIGGERPIN 4
