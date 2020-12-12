@@ -12,3 +12,5 @@
 #define GRIDSTART_X SQUARESIZE // First x position of the grid - probably one square from zero which is my estimation
 
 #define GRIDSTART_Y SQUARESIZE // See above
+
+#define ONE_INCH_ROTATIONS 8000
