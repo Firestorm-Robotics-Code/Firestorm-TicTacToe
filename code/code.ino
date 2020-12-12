@@ -2,9 +2,12 @@
 
 #include "constants.h"
 
+#include "joystick.cpp"
+
 String inches = "0";
 
 Motor motor(X_PUL, X_DIR);
+int[] directions = {0,0,0,0};
 
 void setup(){
 //  pinMode(TRIGGERPIN,INPUT);
@@ -13,6 +16,7 @@ void setup(){
 }
 
 void loop(){
+  joystickRead(*directions);
   if (Serial.available()){
     inches = Serial.readString();
     motor.move(inches.toInt() * 8000);
