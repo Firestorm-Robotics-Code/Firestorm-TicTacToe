@@ -5,7 +5,7 @@
 #define Y_PUL 7
 #define Y_DIR 6
 
-#define SQUARESIZE 4 // Just a guesstimation. Will change this to something real later - when someone on Engineering shows up.
+#define SQUARESIZE 5 // Just a guesstimation. Will change this to something real later - when someone on Engineering shows up.
 
 #define GRIDSIZE 3 // Three squares on every side - not a necessary definition but still
 
