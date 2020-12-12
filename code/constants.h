@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #define X_PUL 12 // It turns out I was wrong: it doesn't have to be a real PWM pin. Software PWM is a thing and works.
 #define X_DIR 11 // Or maybe 12 is a PWM as well - It shouldn't matter
 // Two motors are on X, so only four pins
@@ -14,10 +15,6 @@
 #define GRIDSTART_Y SQUARESIZE // See above
 
 #define ONE_INCH_ROTATIONS 8000
-
-#define X_PIN A5
-
-#define Y_PIN A6
 
 #define RIGHT 45333.333
 
