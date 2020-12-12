@@ -1,10 +1,9 @@
 #include "motor.cpp"
-
 #include "constants.h"
 
-int xPinV = 0
+int xPinV = 0;
 
-int yPinV = 0
+int yPinV = 0;
 
 #define vaule 100
 
