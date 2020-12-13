@@ -8,7 +8,8 @@ int yPinV = 0;
 
 #define Y_PIN A6
 
-#define vaule 200
+#define WINDOW 200 // 200 point window for any direction
+#define BREAKINGPOINT 450 // The value of the joystick must be at least this, or the direction is not read. 450 was hardcoded before 4 times, so this replaces it.
 
 void readPin(){
   xPinV = analogRead(X_PIN)-512; // zero out what the pin is reading
@@ -17,16 +18,16 @@ void readPin(){
 
 void joystickRead(bool directions[4]){
   readPin();
-  if(yPinV >= 450 && (xPinV <= vaule && xPinV >= -vaule)){ // reads if the y pin's vaule is higher than 450 and if the x pin is between vaule and -vaule
+  if(yPinV >= BREAKINGPOINT && (xPinV <= WINDOW && xPinV >= -WINDOW)){ // reads if the y pin's value is higher than BREAKINGPOINT and if the x pin is between WINDOW and -WINDOW
     directions[0]=true;
   }
-  else if(yPinV <= -450 && (xPinV <= vaule && xPinV >= -vaule)){ // reads if the y pin's vaule is lower than -450 and if the x pin is between vaule and -vaule
+  else if(yPinV <= -BREAKINGPOINT && (xPinV <= WINDOW && xPinV >= -WINDOW)){ // Same, but for the y pin lower than -BREAKINGPOINT rather than higher
     directions[1]=true;
   }
-  else if(xPinV <= 450 && (yPinV <= vaule && yPinV >= -vaule)){ // reads if the x pin vaule is higher that 450 and if the y pin is between vaule and -vaule
+  else if(xPinV >= BREAKINGPOINT && (yPinV <= WINDOW && yPinV >= -WINDOW)){ // Same as the first one, except the axes are flipped
     directions[2]=true;
   }
-  else if(xPinV <= -450 && (yPinV <= vaule && yPinV >= -vaule)){ // reads if the x pin vaule is lower that -450 and if the y pin is between vaule and -vaule
+  else if(xPinV <= -BREAKINGPOINT && (yPinV <= WINDOW && yPinV >= -WINDOW)){ // Same as above, just less than -BREAKINGPOINT rather than greater than 450
     directions[3]=true;
   }
 }
