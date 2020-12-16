@@ -12,10 +12,11 @@ void setup(){
 //  pinMode(TRIGGERPIN,INPUT);
   motor.setSpeed(160000); // 20 inches per second. It doesn't actually go that fast (sadly) but its good enough.
   Serial.begin(9600);
+  joystickSetup();
 }
 
 void loop(){
-  for (int i = 0; i < 4; ++i) // Clear loop before getting joystick values
+  for (int i = 0; i < 4; i++) // Clear loop before getting joystick values
   {
     directions[i] = false;
   }
