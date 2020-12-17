@@ -18,7 +18,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     
     int stage=0;
     
-    unsigned int speed = 1000; // Speed is in steps per second.
+    unsigned long speed = 1000; // Speed is in steps per second.
     
     unsigned long lastMicrosPul=0; // Last microseconds value for the pulse. Unsigned long is the return type of the micros function.
     
@@ -35,7 +35,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       return goal - pos;
     }
     
-    void setSpeed(int newspeed){
+    void setSpeed(unsigned long newspeed){
       speed=newspeed;
     }
     
