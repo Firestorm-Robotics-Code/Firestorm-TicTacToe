@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include "analogReadFast.h"
 
 int xPinV = 0;
 
@@ -16,16 +17,9 @@ void joystickSetup(){
   pinMode(Y_PIN,INPUT);
 }
 
-unsigned long lastPollTime=0;
-unsigned long curPollTime=0;
-
 void joystickRead(bool directions[4]){
-  curPollTime=micros();
-  if (curPollTime > lastPollTime + 10000){ // Poll every 10 millisecond
-    xPinV = analogReadFast(X_PIN)-512; // zero out what the pin is reading
-    yPinV = analogReadFast(Y_PIN)-512; // same here but for y
-    lastPollTime=curPollTime;
-  }
+  xPinV = analogReadFast(X_PIN)-512; // zero out what the pin is reading
+  yPinV = analogReadFast(Y_PIN)-512; // same here but for y
   if(yPinV >= BREAKINGPOINT && (xPinV <= WINDOW && xPinV >= -WINDOW)){ // reads if the y pin's value is higher than BREAKINGPOINT and if the x pin is between WINDOW and -WINDOW
     directions[0]=true;
   }
