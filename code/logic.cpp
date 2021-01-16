@@ -24,7 +24,8 @@ private:
     {B,B,B},
     {B,B,B}
   }
-  isTurnReady=false;
+  bool isTurnReady=false;
+  Joystick joystick = Joystick(A5, A6);
 public:
   bool zero(){
     whereX = 0;
@@ -40,6 +41,14 @@ public:
     whereX+=xm;
     whereY+=ym;
     moveTo(whereX,whereY);
+  }
+  void run(){
+    if (isTurnReady){
+      bool* directions = joystick.joystickRead();
+      if (directions[0]){
+        move(0,1);
+      }
+    }
   }
 }
 
