@@ -11,6 +11,7 @@
 class TicTacToeBoard{
 private:
   bool twoPlayer = true;
+  Joystick joy = Joystick(JOYPINX, JOYPINY);
   bool whoTurn = true;
   int8_t stage; // 0 = moving to space, 1 = reached space, 2 = grabbed disc, 3 = dropped disc (2&3 should revert to 0 immediately)
   bool placed = false;
