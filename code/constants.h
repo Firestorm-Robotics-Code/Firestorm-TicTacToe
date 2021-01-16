@@ -14,12 +14,6 @@
 
 #define GRIDSTART_Y SQUARESIZE // See above
 
-#define ONE_INCH_ROTATIONS 8000
+#define ONE_INCH_ROTATIONS 800
 
-#define RIGHT 45333.333
-
-#define LEFT -45333.333
-
-#define UP 45333.333
-
-#define DOWN -45333.333
+#define GRIDCELLSIZE 5.567

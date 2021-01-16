@@ -5,51 +5,54 @@
 #define X 1
 #define O 0
 #define B -1
-bool whoTurn = true;
-bool placed = 0;
-int whereX = 0;
-int whereY = 0;
-int board[][3]= {
-  {B,B,B},
-  {B,B,B},
-  {B,B,B}
+#define JOYPINX A5
+#define JOYPINY A6
+
+class TicTacToeBoard{
+private:
+  bool twoPlayer = true;
+  bool whoTurn = true;
+  int8_t stage; // 0 = moving to space, 1 = reached space, 2 = grabbed disc, 3 = dropped disc (2&3 should revert to 0 immediately)
+  bool placed = false;
+  Motor ymotor(Y_PUL, Y_DIR);
+  Motor xmotor(X_PUL, X_DIR);
+  int8_t whereX = 0;
+  int8_t whereY = 0;
+  int board[][3]= {
+    {B,B,B},
+    {B,B,B},
+    {B,B,B}
+  }
+  isTurnReady=false;
+public:
+  bool zero(){
+    whereX = 0;
+    whereY = 0;
+    return true;
+  }
+  void moveTo(int8_t x, int8_t y){
+    // Absolute move - don't set wherex, wherey here.
+    xmotor.setGoal(x*GRIDCELLSIZE);
+    ymotor.setGoal(y*GRIDCELLSIZE);
+  }
+  void move(int8_t xm, int8_t y){
+    whereX+=xm;
+    whereY+=ym;
+    moveTo(whereX,whereY);
+  }
 }
-void where(){
-  if (directions[0]){// makes it so when the x or y moves it makes its possiotion a 0, 1, 2, depeding apon if its in the first, second, or third possition.
-    whereX = (whereX+1);
-  }
-  if (directions[1]){
-    whereX = (whereX-1);
-  }
-  if (directions[2]{
-    whereY = (whereY-1);
-  }
-  if (directions[3]{
-    whereY = (whereY+1);
-  }  
-  while (whereX<=0){// makes sure that if an extra input is put in affter it is all the way to the right, left, up, or down the number possition will not be greater than 2 or less than 0
-    whereX = (whereX+1);
-  }
-  while (whereY<=0){
-    whereY = (whereY+1);  
-  }
-  while (whereX>=2){
-    whereX = (whereX-1);
-  }
-  while (whereY>=2){
-    whereY = (whereY-1);  
-  }
-}
+
+
 void whatDoTurn(){
   if (placed == 1)
     if (whoTurn = O){
       putDown = 0;
-      board[whereX][whereY]= O
+      board[whereX][whereY]= O;
       whoTurn = X;
       placed = 0;
     }else{
       putDown = 0;
-      board[whereX][whereY]= X
+      board[whereX][whereY]= X;
       whoTurn = O;
       placed = 0;
     }    
