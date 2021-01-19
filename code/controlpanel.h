@@ -32,17 +32,47 @@ public:
   }
   
   void poll(){
+    
+    // Set oldbuttonstate to the old value of buttonstate
+    
     oldbuttonstate = buttonstate;
+    
+    // Set Joystick X, Y
+    
     Joystick_Y = analogReadFast(joystick_ypin);
     Joystick_X = analogReadFast(joystick_xpin);
+
+    // Set new buttonstate
+    
     buttonstate = digitalRead(button_pin);
+
+    // Set who's turn value
+    
     turn = digitalRead(turn_pin);
+
+    // Set mode
+    
     mode = digitalRead(mode_pin);
+
+    // Determine if button state has toggled
+    
     if (buttonstate != oldbuttonstate){
-      buttonToggleCallback(&buttonstate);
-      if (buttonstate == false){ // If the button state is false (not pressed) and it is not equal to what it was, it must mean that the button has gone from false (starting state) to true (pressed) to false again, thus a click.
-        buttonPressCallback();
+      // Check if it is a button press
+      
+      if // Assembly has spoiled me, so for some reason I think this looks good
+      
+      (buttonstate == false)
+      
+      { // If the button state is false (not pressed) and it is not equal to what it was, it must mean that the button has gone from false (starting state) to true (pressed) to false again, thus a click.
+        buttonPressCallback(); // Run the pressed callback, this is from a function pointer (google)
       }
+      
+      else
+      
+      {
+        buttonToggleCallback(&buttonstate); // Run the toggled callback, this is from a function pointer (google it)
+      }
+      // Actually I don't, I'm just mocking people who think having the brackets on a separate line is beautification
     }
   }
 };
