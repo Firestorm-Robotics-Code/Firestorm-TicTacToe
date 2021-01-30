@@ -1,3 +1,7 @@
+/* By Tyler Clarke with some help from Lawson Brashear
+ * Code for the control panel, wrapped up in a beautiful class 
+ */
+
 #include "analogReadFast.h"
 
 

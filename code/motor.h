@@ -1,4 +1,6 @@
-#include <Arduino.h>
+/* By Tyler Clarke
+ * Code to control a two-wire stepper motor
+ */
 
 // This is an alternative to AccelStepper, which will be specifically tailored to our needs. We will use this instead as it is less than 100 lines and very effecient - It worked on the first try (after I corrected a few type errors and included arduino.h)
 
