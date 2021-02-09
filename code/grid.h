@@ -7,6 +7,11 @@
  */
 
 
+class GridOperation{ // Grid Operation, does an Operation on the Grid.
+  
+}
+
+
 class Grid{
 private:
   int tilewidth = 0;
