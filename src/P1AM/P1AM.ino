@@ -20,15 +20,17 @@ void pressed(){
 ControlPanel cp(1, 2, 3, 4, 5, &toggle, &pressed); // & (ampersand) = use pointer rather than value. This is a function pointer.
 */
 
-Motor ymotor(12,11);
-Motor xmotor(7,4);
+Motor ymotor(12, 11, true, 3, false); // Y limit switch pin is 3
+Motor xmotor(7, 4, true, 4, false); // X limit switch pin is 4
+
 void setup(){
-  Serial.begin(115200);
-  pinMode(3, INPUT_PULLUP);
-  pinMode(4, OUTPUT);
-  digitalWrite(4, HIGH);
-  ymotor.zero(true, 3, false);
-  xmotor.zero();
+  Serial.begin(115200); // Begin serial at a useful bitrate
+  
+  pinMode(5, OUTPUT); // Power to the limit switches
+  digitalWrite(5, HIGH); // Power to the limit switches
+  
+  ymotor.zero(); // Zeroing information is in object declaration above
+  xmotor.zero(); // Just read the above comment
 }
 
 bool finLogged = false;
@@ -70,14 +72,16 @@ void loop(){
       int value = command.substring(11, command.length() - 1).toInt();
     }
     if (command.substring(0,1) == "a"){
-      ymotor.move(-ymotor.getDistance());
-      xmotor.move(-xmotor.getDistance());
+      ymotor.abort();
+      xmotor.abort();
     }
     if (command.substring(0,6) == "speedy"){
       int value = command.substring(6, command.length() - 1).toInt();
       ymotor.setSpeed(value);
     }
     if (command.substring(0,4) == "zero"){
+      ymotor.zero(true, 3, false);
+      xmotor.zero();
     }
   }
 }

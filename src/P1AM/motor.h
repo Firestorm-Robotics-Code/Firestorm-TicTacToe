@@ -28,24 +28,29 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
 
     bool zero_doing = false;
     bool zero_isAlwaysOn = false;
-    int zero_triggerpin = false;
+    int zero_triggerpin = 0;
+    bool zero_direction = false;
+
+    bool enabled = true;
     
-    Motor(int pul, int dir){
+    Motor(int pul, int dir, bool zero_alwayson, int zero_port, bool zero_dir){ // Zeroing information is included here, so the zero function doesn't need to take arguments.
       dirpin=dir;
       pulpin=pul;
-      pinMode(pul,OUTPUT); // At least PUL must be a PWM pin, as it has to pulse on and off rapidly.
-      pinMode(dir,OUTPUT); // No timer controls on direction, which could eventually be a problem as 
+      pinMode(pul,OUTPUT);
+      pinMode(dir,OUTPUT);
+      zero_isAlwaysOn = zero_alwayson;
+      zero_triggerpin = zero_port;
+      zero_direction = zero_dir;
     }
 
     bool isFinished(){
       return pos == goal;
     }
 
-    void zero(bool isAlwaysOn, int pin, bool direction){
+    void zero(){
+      pinMode(zero_triggerpin, INPUT_PULLUP);
       zero_doing = true;
-      zero_isAlwaysOn = isAlwaysOn;
-      zero_triggerpin = pin;
-      digitalWrite(dirpin, direction); // Direction should be false for our purposes.
+      digitalWrite(dirpin, zero_direction); // Direction should be false for our purposes.
     }
     
     long getDistance(){ // Return the distance to the goal
@@ -63,8 +68,17 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     void move(int distance){
       goal += distance;
     }
+
+    void abort(){ // Hard abort. Will eventually pulse motor controller disable pin, for now just performs software disable.
+      pos = 0;
+      goal = 0;
+      enabled = false;
+    }
     
     void run(){ // 20 microsecond pulse
+      if (not enabled){
+        return;
+      }
       if (zero_doing){ // Zeroing
         if (stage == 2 && micros() - lastMicrosPul >= 1250){ // Copied my calculation from the counterpart of this if condition in the main move code, simply divided 500000 by 400 (my speed)
           stage = 0;
@@ -75,7 +89,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
           stage = 2;
         }
         if (stage == 0){
-          if (digitalRead(zero_triggerpin) == isAlwaysOn){
+          if (digitalRead(zero_triggerpin) == zero_isAlwaysOn){
             digitalWrite(pulpin, HIGH);
             lastMicrosPul = micros();
             stage = 1;
