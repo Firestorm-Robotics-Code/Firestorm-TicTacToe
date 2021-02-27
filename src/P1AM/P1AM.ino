@@ -80,7 +80,7 @@ void loop(){
       ymotor.setSpeed(value);
     }
     if (command.substring(0,4) == "zero"){
-      ymotor.zero(true, 3, false);
+      ymotor.zero();
       xmotor.zero();
     }
   }
