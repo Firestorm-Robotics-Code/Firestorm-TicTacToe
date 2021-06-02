@@ -24,12 +24,12 @@ Motor ymotor(12,11);
 Motor xmotor(7,6);
 void setup(){
   //Serial.begin(9600);
-  xmotor.setGoal(800);
-  xmotor.setSpeed(800);
-  //ymotor.setGoal(800);
+  xmotor.setGoal(-8000);
+  xmotor.setSpeed(8000);
+  ymotor.setGoal(-800);
 }
 
 void loop(){
-  //ymotor.run();
+  ymotor.run();
   xmotor.run();
 }
