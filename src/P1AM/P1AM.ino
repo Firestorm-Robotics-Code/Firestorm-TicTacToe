@@ -3,40 +3,27 @@
  */
 
 #include "motor.h"
-/*#include "controlpanel.h"
-#include "minimax.h"
+#include "grid.h"
 
+#define TILEWIDTH 4 // Assume 4 inches
 
-#define LIMITSWITCHPIN 4
-//TicTacToeBoard board;
+Motor ymotor(12, 11, true, 6, true); // Y limit switch pin is 6
+Motor xmotor(7, 4, false, 5, true); // X limit switch pin is 5
 
-
-void toggle(bool state){
-  Serial.println("Toggled");
-}
-void pressed(){
-  Serial.println("Pressed");
-}
-ControlPanel cp(1, 2, 3, 4, 5, &toggle, &pressed); // & (ampersand) = use pointer rather than value. This is a function pointer.
-*/
-
-Motor ymotor(12, 11, true, 3, false); // Y limit switch pin is 3
-Motor xmotor(7, 4, true, 4, false); // X limit switch pin is 4
+Grid manager(&xmotor, &ymotor, TILEWIDTH, -1); // The "-1" is the magnet pin. Set it to an invalid pin so nothing breaks if I'm stupid.
 
 void setup(){
-  Serial.begin(115200); // Begin serial at a useful bitrate
-  
-  pinMode(5, OUTPUT); // Power to the limit switches
-  digitalWrite(5, HIGH); // Power to the limit switches
-  
-  ymotor.zero(); // Zeroing information is in object declaration above
-  xmotor.zero(); // Just read the above comment
+  pinMode(7, OUTPUT);
+  Serial.begin(9600); // Begin serial at a useful bitrate
+  //while (!Serial); // Wait for serial
+  xmotor.setSpeed(800);
+  xmotor.zero(800);
+  //manager.grabPiece(true); // Get a "O"
 }
 
 bool finLogged = false;
 
 void loop(){
-  ymotor.run();
   xmotor.run();
   if (xmotor.isFinished() && !finLogged){
     Serial.println("Finished my goal!");
@@ -62,6 +49,18 @@ void loop(){
       ymotor.move(value);
       finLogged = false;
     }
+    if (command.substring(0,5) == "gotox"){
+      int value = command.substring(5, command.length()-1).toInt();
+      Serial.println(value);
+      xmotor.setGoal(value);
+      finLogged = false;
+    }
+    if (command.substring(0,5) == "gotoy"){
+      int value = command.substring(5, command.length() - 1).toInt();
+      Serial.println(value);
+      ymotor.setGoal(value);
+      finLogged = false;
+    }
     if (command.substring(0,8) == "diagonal"){
       int value = command.substring(8, command.length() - 1).toInt();
       ymotor.move(value);
@@ -70,6 +69,11 @@ void loop(){
     }
     if (command.substring(0,11) == "diagonalinv"){
       int value = command.substring(11, command.length() - 1).toInt();
+    }
+    if (command.substring(0,7) == "jigglex"){
+      int value = command.substring(7, command.length() - 1).toInt();
+      xmotor.move(value);
+      xmotor.move(-value);
     }
     if (command.substring(0,1) == "a"){
       ymotor.abort();
@@ -80,8 +84,9 @@ void loop(){
       ymotor.setSpeed(value);
     }
     if (command.substring(0,4) == "zero"){
-      ymotor.zero();
-      xmotor.zero();
+      xmotor.zero(400);
     }
   }
+  ymotor.run();
+  xmotor.run();
 }
