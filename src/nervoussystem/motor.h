@@ -127,7 +127,6 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       }
       
       if (stage == 1 && (micros() - lastMicrosPul) >= 8){ // Minimum pulse width of 7.5 μs (microseconds). Half a microsecond is about 1/1500000th of the time it takes to load the google search results about the microsecond symbol, so I decided to just round up to 8 microseconds.
-        Serial.println("Our favorite color's purple");
         digitalWrite(pulpin, LOW);
         lastMicrosPul = micros(); // Update the value, so we can keep the pulse "low" until another pulse is needed.
         stage = 2;
