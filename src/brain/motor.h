@@ -33,15 +33,11 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
 
     bool enabled = true;
 
-    int maxpos;
-    int doops = 0;
-
     Motor(){ // This is a spoof motor which will not run.
       enabled = false;
     }
     
-    Motor(int pul, int dir, bool zero_alwayson, int zero_port, bool zero_dir, int maxPos = -1){ // Zeroing information is included here, so the zero function doesn't need to take arguments. (Except speed, which should be set at runtime not at define time)
-      maxpos = maxPos;
+    Motor(int pul, int dir, bool zero_alwayson, int zero_port, bool zero_dir){ // Zeroing information is included here, so the zero function doesn't need to take arguments.
       dirpin=dir;
       pulpin=pul;
       pinMode(pul,OUTPUT);
@@ -56,17 +52,34 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     }
 
     void zero(int zerospeed){
-      bool running = true;
-      while (running){
-        while (!digitalRead(zero_triggerpin) == zero_isAlwaysOn){
-          stepTasks(zerospeed, zero_direction);
-        }
-        delay(1); // I hate it too, but a jittery trigger is nothing to sneeze, or maybe poop, at!
-        if (digitalRead(zero_triggerpin) == zero_isAlwaysOn){
-          running = false;
-        }
+      if (!enabled){
+        return;
       }
-      digitalWrite(dirpin, LOW); // At first you might think this should be -zero_direction, but remember that its always LOW when the motor boots up!
+      pinMode(zero_triggerpin, INPUT_PULLUP);
+      zero_doing = true;
+      digitalWrite(dirpin, zero_direction); // Direction should be false for our purposes.
+      while (zero_doing){
+        if (stage == 2 && micros() - lastMicrosPul >= 500000/zerospeed){ // Copied my calculation from the counterpart of this if condition in the main move code, simply divided 500000 by 400 (my speed)
+          stage = 0;
+        }
+        if (stage == 1 && micros() - lastMicrosPul >= 8){
+          digitalWrite(pulpin, LOW);
+          lastMicrosPul = micros();
+          stage = 2;
+        }
+        if (stage == 0){
+          if (digitalRead(zero_triggerpin) == !zero_isAlwaysOn){
+            digitalWrite(pulpin, HIGH);
+            lastMicrosPul = micros();
+            stage = 1;
+          }
+          else{
+            zero_doing = false;
+            pos = 0;
+            goal = 0;
+          }
+        } // "If" conditions are in reverse order (stage 2 and down, as opposed to stage 0 and down) as a speed improvement: the micros function will end up being called twice quite often, delaying the system. Because of the 45 megaherts processor, I don't really care about this, but its still good to be efficient.
+      }
       // Obviously, "zero" should block the thread.
     }
     
@@ -91,27 +104,25 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       goal = 0;
       enabled = false;
     }
-
-    void stepTasks(int theSpeed, bool direction){ // This simply steps given a speed and direction. Zero and Run (and runSpeed, and runUntil, and runFor) will use this.
+    
+    void run(){ // 20 microsecond pulse
       if (not enabled){
         return;
       }
-      
-      if (direction == false && curdir == true){ // Boolean curdir value True = forwards, False = backwards.
-        curdir = false; // Flip it back, to the right value.
-        digitalWrite(dirpin, HIGH); // This may be backwards - To any other coders who catch this: if this is actually reversed, just flip the "LOW" to "HIGH". This should reverse the direction that it considers "backwards".
+      if (getDistance() < 0 && curdir == true){ // Boolean curdir value True = forwards, False = backwards.
+        curdir = false; // Go backwards
+        digitalWrite(dirpin, LOW); // This may be backwards - To any other coders who catch this: if this is actually reversed, just flip the "LOW" to "HIGH". This should reverse the direction that it considers "backwards".
       }
       
-      if (direction == true && curdir == false){ // These are flipped deliberately. The idea of these if conditions is to catch any situation in which they are wrong.
-        curdir = true;
-        digitalWrite(dirpin, LOW); // If the other one was backwards, make this one LOW, to reverse the direction.
+      if (getDistance() > 0 && curdir == false){ // These are flipped deliberately. The idea of these if conditions is to catch any situation in which they are wrong.
+        curdir = true; // Go forwards
+        digitalWrite(dirpin, HIGH); // If the other one was backwards, make this one LOW, to reverse the direction.
       }
-
       // The above if conditions may cause a problem with the direction flipping too soon before the pulse. This could result in the motors driving one step too far - if this becomes an issue, we may have to add a pause of five microseconds after this. For more information: https://cdn.automationdirect.com/static/manuals/leadshinestepper/dm322e.pdf. You can also find that link in the githubs README.md. I used page 13 mostly.
 
-      if (stage == 2 && (micros() - lastMicrosPul) > 500000/theSpeed){ // Convert speed in steps per second to minimum time between steps. Real minimum step length is whatever this is plus 8 (in microseconds).
+      if (stage == 2 && (micros() - lastMicrosPul) > 500000/speed){ // Convert speed in steps per second to minimum time between steps. Real minimum step length is whatever this is plus 8 (in microseconds).
         stage = 0;
-        pos += curdir ? 1 : -1; // Ternary. If current direction is true (forwards), add one to position. If current direction is false (backwards), subtract one from position.
+        pos += (curdir ? 1 : -1); // Ternary. If current direction is true (forwards), add one to position. If current direction is false (backwards), subtract one from position.
         // This caused an issue when, confronted with a negative goal, it went on forever: because position was increasing away from goal, rather than decreasing to it.
       }
       
@@ -121,64 +132,11 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
         stage = 2;
       }
       
-      if (stage == 0){
+      if (stage == 0 && pos != goal){
         digitalWrite(pulpin, HIGH);
         lastMicrosPul = micros(); // Get the number of microseconds since start of the Arduino. Because MKRZero (the board we're emulating) has a 48 MHZ processor, this should return an absolute value.
-        stage = 1;
+        stage = 1; // Note that the Uno has a resolution of 4 microseconds due to its 16 MHZ clock speed. Overclocking would be pointless because the smallest possible delay is 8 microseconds allowing us to run this on a lilypad if we have to.
+        // And anyways, the speed limiter makes the 8 microsecond pulse limit pretty funny because it will never run that fast - we would run the danger of destroying the motor.
       } // "If" conditions are in reverse order (stage 2 and down, as opposed to stage 0 and down) as a speed improvement: the micros function will end up being called twice quite often, delaying the system. Because of the 45 megaherts processor, I don't really care about this, but its still good to be efficient.
     }
-
-    void tester(){
-      if (goal == -800){
-        Serial.println("W_L1");
-      }
-      else{
-        Serial.println("B_L1");
-      }
-    }
-
-    void tester2(){
-      if (goal == -800){
-        Serial.println("W_L2");
-      }
-      else{
-        Serial.println("B_L2");
-      }
-    }
-
-    void tester3(){
-      if (goal == -800){
-        Serial.println("W_L3");
-      }
-      else{
-        Serial.println("W_L3");
-      }
-    }
-
-    void tester4(){
-      if (goal == -800){
-        Serial.println("W_L4");
-      }
-      else{
-        Serial.println("W_L4");
-      }
-    }
-    
-    void run(int runSpeed = 0){ // 20 microsecond pulse
-      long distance = getDistance();
-      if (runSpeed == 0){
-        if (distance != 0){
-          if ((distance > 0 && pos < maxpos) || (distance < 0 && pos > 0)){
-            stepTasks(speed, distance > 0); // We know that getDistance will always be negative or positive, never zero, because of the if condition.
-            pos += distance/abs(distance);
-          }
-        }
-      }
-      else{
-        stepTasks(runSpeed, runSpeed > 0); // Runspeed won't be equal to 0 either!
-      }
-    }
 }; // This class is very minimal. It doesn't have the charm (and extra logic) of AccelStepper, but I hope we will build on it.
-
-
-// Ruled out: move, setGoal, stepTasks, 
