@@ -172,7 +172,9 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
         if (distance != 0){
           if ((distance > 0 && pos < maxpos) || (distance < 0 && pos > 0) || true){
             stepTasks(speed, distance > 0); // We know that getDistance will always be negative or positive, never zero, because of the if condition.
-            pos += distance/abs(distance);
+            if (stage == 1){ // If stage is zero, the pin is high. This could be an issue, potentially.
+              pos += distance/abs(distance);
+            }
           }
         }
       }
