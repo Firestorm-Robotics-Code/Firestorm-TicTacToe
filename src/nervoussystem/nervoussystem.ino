@@ -28,6 +28,8 @@ void setup(){ /* Setup code here. */
   Serial.println("Let the Games Begin");
   xmotor.setSpeed(800);
   ymotor.setSpeed(800);
+  digitalWrite(4, LOW);
+  while (1);
   ymotor.zero(400);
 }
 
@@ -51,7 +53,6 @@ void loop(){ /* This is the mainloop. */
     xmotor.run();
   }*/
   ymotor.run();
-  xmotor.run();
   if (Serial.available()){
     String data = Serial.readString();
     Serial.println(data.substring(0,5));

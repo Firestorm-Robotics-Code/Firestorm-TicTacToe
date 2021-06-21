@@ -99,11 +99,13 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       
       if (direction == false && curdir == true){ // Boolean curdir value True = forwards, False = backwards.
         curdir = false; // Flip it back, to the right value.
+        Serial.println("Going high, dance all night");
         digitalWrite(dirpin, HIGH); // This may be backwards - To any other coders who catch this: if this is actually reversed, just flip the "LOW" to "HIGH". This should reverse the direction that it considers "backwards".
       }
       
       if (direction == true && curdir == false){ // These are flipped deliberately. The idea of these if conditions is to catch any situation in which they are wrong.
         curdir = true;
+        Serial.println("Going low, to the showww....");
         digitalWrite(dirpin, LOW); // If the other one was backwards, make this one LOW, to reverse the direction.
       }
 
@@ -168,7 +170,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       long distance = getDistance();
       if (runSpeed == 0){
         if (distance != 0){
-          if ((distance > 0 && pos < maxpos) || (distance < 0 && pos > 0)){
+          if ((distance > 0 && pos < maxpos) || (distance < 0 && pos > 0) || true){
             stepTasks(speed, distance > 0); // We know that getDistance will always be negative or positive, never zero, because of the if condition.
             pos += distance/abs(distance);
           }
