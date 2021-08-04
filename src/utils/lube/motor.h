@@ -14,7 +14,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     
     long goal = 0; // Same
     
-    boll curdir = false; // Bool is the most effecient type because it theoretically only uses 1 bit. I'm not sure how this plays out as far as memory is concerned, but it at least uses less space than the barbarous 16-bit integer.
+    bool curdir = false; // Bool is the most effecient type because it theoretically only uses 1 bit. I'm not sure how this plays out as far as memory is concerned, but it at least uses less space than the barbarous 16-bit integer.
 
     int dirpin; 
     
@@ -30,14 +30,14 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     
     unsigned long lastMicrosDir = 0; // Last microseconds value for the direction
 
-    boll zero_doing = false;
-    boll zero_isAlwaysOn = false;
+    bool zero_doing = false;
+    bool zero_isAlwaysOn = false;
     int zero_triggerpin = 0;
     int zero_triggerpin_auxillary = 0;
-    boll usesAuxSwitch = false;
-    boll zero_direction = false;
+    bool usesAuxSwitch = false;
+    bool zero_direction = false;
 
-    boll enabled = true;
+    bool enabled = true;
 
     int maxpos;
     int doops = 0;
@@ -61,12 +61,6 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       return pos == goal;
     }
 
-    void setAuxilarySwitch(int theNewSwitch){
-      usesAuxSwitch = true;
-      zero_triggerpin_auxillary = theNewSwitch;
-      pinMode(theNewSwitch, INPUT_PULLUP);
-    }
-    
     void stepTasks(int theSpeed, bool direction){ // This simply steps given a speed and direction. Zero and Run (and runSpeed, and runUntil, and runFor) will use this.
       if (not enabled){
         return;
@@ -78,12 +72,12 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       
       if (direction == false && curdir == true){ // Boolean curdir value True = forwards, False = backwards.
         curdir = false; // Flip it back, to the right value.
-        digitalWrite(dirpin, HIGH); // This may be backwards - To any other coders who catch this: if this is actually reversed, just flip the "LOW" to "HIGH". This should reverse the direction that it considers "backwards".
+        digitalWrite(dirpin, LOW); // This may be backwards - To any other coders who catch this: if this is actually reversed, just flip the "LOW" to "HIGH". This should reverse the direction that it considers "backwards".
       }
       
       if (direction == true && curdir == false){ // These are flipped deliberately. The idea of these if conditions is to catch any situation in which they are wrong.
         curdir = true;
-        digitalWrite(dirpin, LOW); // If the other one was backwards, make this one LOW, to reverse the direction.
+        digitalWrite(dirpin, HIGH); // If the other one was backwards, make this one LOW, to reverse the direction.
       }
 
       // The above if conditions may cause a problem with the direction flipping too soon before the pulse. This could result in the motors driving one step too far - if this becomes an issue, we may have to add a pause of five microseconds after this. For more information: https://cdn.automationdirect.com/static/manuals/leadshinestepper/dm322e.pdf. You can also find that link in the githubs README.md. I used page 13 mostly.
@@ -104,7 +98,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
         digitalWrite(pulpin, HIGH);
         lastMicrosPul = micros(); // Get the number of microseconds since start of the Arduino. Because MKRZero (the board we're emulating) has a 48 MHZ processor, this should return an absolute value.
         stage = 1;
-      } // "If" conditions are in reverse order (stage 2 and down, as opposed to stage 0 and down) as a speed improvement: without it, the micros function will end up being called twice quite often, delaying the system. Because of the 45 megaherts processor, I don't really care about this, but its still good to be efficient.
+      } // "If" conditions are in reverse order (stage 2 and down, as opposed to stage 0 and down) as a speed improvement: the micros function will end up being called twice quite often, delaying the system. Because of the 45 megaherts processor, I don't really care about this, but its still good to be efficient.
     }
 
     bool zeroTasks(int zerospeed){
@@ -131,15 +125,14 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     void lubricate(int lubespeed, long time, int startPos, int distance){
       setGoal(startPos);
       long i = 0;
-      while (i < time){
-        if (pos <= startPos){
+      while (millis() < time){
+        if (pos == startPos){
           setGoal(startPos + distance);
           i++;
         }
-        if (pos >= startPos + distance){
+        if (pos == startPos + distance){
           setGoal(startPos);
         }
-        setGoal(startPos);
         run();
       }
     }
@@ -264,17 +257,18 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     void run(int runSpeed = 0){ // 20 microsecond pulse
       long distance = getDistance();
       if (runSpeed == 0){
-        stepTasks(curSpeed, distance > 0); // We know that getDistance will always be negative or positive, never zero, because of the if condition.
-        if (curSpeed != reqSpeed){
-          curSpeed += reqSpeed / abs(reqSpeed);
-          Serial.println(curSpeed);
-        }
-        if (stage == 0){ // If stage is zero, the pin is high. This could be an issue, potentially.
-          pos += distance/abs(distance);
-        }
-        if (distance == 0){
-          curSpeed = 0;
-          reqSpeed = 0;
+        if (distance != 0){
+          stepTasks(curSpeed, distance > 0); // We know that getDistance will always be negative or positive, never zero, because of the if condition.
+          if (curSpeed != reqSpeed){
+            curSpeed += reqSpeed / abs(reqSpeed);
+          }
+          if (stage == 0){ // If stage is zero, the pin is high. This could be an issue, potentially.
+            pos += distance/abs(distance);
+          }
+          if (distance == 0){
+            curSpeed = 0;
+            reqSpeed = 0;
+          }
         }
       }
       else{
@@ -282,6 +276,3 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       }
     }
 }; // This class is very minimal. It doesn't have the charm (and extra logic) of AccelStepper, but I hope we will build on it.
-
-
-// Ruled out: move, setGoal, stepTasks, 

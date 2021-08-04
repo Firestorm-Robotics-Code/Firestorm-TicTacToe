@@ -2,11 +2,14 @@
 // Uses a bit-banged protocol with object-over-serial.
 // Commands for sending: serialobject.write((bytes*)object, sizeof(object));
 // Commands for receiving: type data = (type)serialobject.readBytes(sizeof(type));
+typedef bool boll;
 
 #define RX 3
 #define TX 4
 #define JOYSTICKSPEED 6400
 #include "motor.h"
+#include "grid.h"
+#include "lightcontrols.h"
 //#include <SoftwareSerial.h>
 
 struct funny{
@@ -15,8 +18,10 @@ struct funny{
 }; 
 
 //SoftwareSerial coms(RX, TX);
-Motor xmotor(12, 11, true, 2, false, 24 * 800); // Y limit switch pin is unknown
-Motor ymotor(7, 4, true, 5, true, 24 * 800); // X limit switch pin is 2
+Motor xmotor;//(2, 3, true, 12, false, 24 * 800); // Y limit switch pin is unknown
+Motor ymotor(4, 5, true, 22, false, 24 * 800); // X limit switch pin is 2
+Motor ymotorTwo(7, 6, true, 24, false, 24 * 800);
+Grid manager(&xmotor, &ymotor, 4 * 800, -1, 2000, 2000); // 4 inch squares, 2.5 inch offset
 
 void setup(){ /* Setup code here. */
   //pinMode(8, INPUT_PULLUP);
@@ -24,35 +29,32 @@ void setup(){ /* Setup code here. */
   //pinMode(10, INPUT_PULLUP);
   //pinMode(11, INPUT_PULLUP);
   Serial.begin(9600);
-  while (!Serial); // Wait for serial connection. I know this is annoying but... Ok, I don't know this is annoying. Random fact: Precompiler macros are nearly turing-complete.
-  Serial.println("Let the Games Begin");
-  xmotor.setSpeed(800);
-  ymotor.setSpeed(800);
-  digitalWrite(4, LOW);
-  while (1);
-  ymotor.zero(400);
+  //manager.zero();
+  ymotor.lubricate(800, 1000, 400, 23 * 800);
+  ymotorTwo.lubricate(800, 1000, 400, 23 * 800);
+  xmotor.setSpeed(1600);
+  ymotor.setSpeed(3200);
+  ymotorTwo.setSpeed(3200);
+  ymotor.zeroTwo(800, &ymotorTwo);
+
+  bool voop = true;
+
+  ymotor.move(8000);
+  //xmotor.move(800);
+
+  /*manager.playPiece(0,0,false);
+  delay(2000);
+  manager.playPiece(1,1,true);
+  delay(2000);
+  manager.playPiece(0,1,false);
+  delay(2000);
+  manager.playPiece(1, 2, true);
+  delay(2000);
+  manager.playPiece(0, 2, false);
+  Serial.println("O wins");*/
 }
 
-void loop(){ /* This is the mainloop. */
-  /*if (!digitalRead(8)){
-    ymotor.run(-JOYSTICKSPEED);
-  }
-  else if (!digitalRead(10)){
-    ymotor.run(JOYSTICKSPEED);
-  }
-  else{
-    ymotor.run();
-  }
-  if (!digitalRead(9)){
-    xmotor.run(JOYSTICKSPEED);
-  }
-  else if (!digitalRead(11)){
-    xmotor.run(-JOYSTICKSPEED);
-  }
-  else{
-    xmotor.run();
-  }*/
-  ymotor.run();
+bool debugMode(){
   if (Serial.available()){
     String data = Serial.readString();
     Serial.println(data.substring(0,5));
@@ -71,7 +73,20 @@ void loop(){ /* This is the mainloop. */
       ymotor.setSpeed(data.substring(7).toInt());
     }
     else if (data.substring(0, 5) == "yzero"){
-      ymotor.zero(400);
+      ymotor.zeroTwo(400, ymotorTwo);
     }
+    else if (data.substring(0, 5) == "reset"){
+      
+    }
+  }
+  return true;
+}
+
+void loop(){ /* This is the mainloop. */
+  ymotor.run();
+  xmotor.run();
+  if (Serial.available()){
+    lights::chant(<This won't compile, as it is a standin for a HardwareSerial>, 4); // Enter debug mode!
+    while (debugMode);
   }
 }

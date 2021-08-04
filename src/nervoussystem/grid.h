@@ -7,13 +7,12 @@
  */
 
 
-#define TILEWIDTH 1 // One inch tile width for testing.
 #define MAXOPS 10 // Ten is the maximum possible grid operations in cache.
 
 class Grid{
 private:
   int tilewidth;
-  uint8_t grid[5][5]={ // 0 = nothing, 1 = "O", 2 = "X"
+  uint8_t grid[5][5]={ // 0 = nothing, 1 (also False) = "O", 2 (also True) = "X". Note that it is rotated 90 degrees clockwise.
     {1,1,1,1,1},
     {0,0,0,0,2},
     {0,0,0,0,2},
@@ -23,21 +22,27 @@ private:
   Motor* xmotor;
   Motor* ymotor;
   int magpin;
-  bool magState;
+  boll magState;
   int foundPiece[2];
+  int Xoffset;
+  int Yoffset;
   
 public:
-  Grid(Motor *Xmotor, Motor *Ymotor, int twidth, int magnet){
+  Grid(Motor *Xmotor, Motor *Ymotor, int twidth, int magnet, int xoffset, int yoffset){
     magpin = magnet;
     xmotor = Xmotor;
     ymotor = Ymotor;
     tilewidth = twidth;
+    Xoffset = xoffset;
+    Yoffset = yoffset;
   }
   void zero(){
     xmotor -> zero(400);
     ymotor -> zero(400);
+    xmotor -> move(Xoffset);
+    ymotor -> move(Yoffset);
   }
-  void findPiece(int *point, bool& team){
+  void findPiece(int *point, bool team){
     for (int i = 0; i < 5; i++){
       if (grid[0][i] == team + 1){
         point[0] = 0;
@@ -70,25 +75,29 @@ public:
   }
   void moveToGridPositionBlocking(int x, int y){
     Serial.println("Yo!");
-    xmotor -> setGoal(x * tilewidth);
-    ymotor -> setGoal(y * tilewidth);
-    while (!(xmotor -> isFinished() and ymotor -> isFinished())){ // Block until finished
+    xmotor -> setGoal(x * tilewidth + Xoffset);
+    ymotor -> setGoal(y * tilewidth + Yoffset);
+    Serial.println("Ferp");
+    while (!(xmotor -> isFinished() && ymotor -> isFinished())){ // Block until finished
       xmotor -> run();
       ymotor -> run();
     }
+    Serial.println("Stoop");
   }
-  void grabPiece(bool team){ // true = "O", false = "X"
+  void grabPiece(bool team, int delayFish = 0){ // true = "O", false = "X"
     int pos[2];
     findPiece(pos, team);
-    Serial.print(pos[0]);
-    Serial.print(" ");
-    Serial.println(pos[1]);
     moveToGridPositionBlocking(pos[0], pos[1]);
     magnetOn();
+    delay(delayFish);
+    grid[pos[0]][pos[1]] = 0;
   }
-  void playPiece(int x, int y, bool team){
-    grabPiece(team); // Grab a piece
-    moveToGridPositionBlocking(x, y); // Move it to a position
+  void playPiece(int x, int y, bool team, int delayFish=500){
+    grabPiece(team, delayFish); // Grab a piece
+    Serial.println("Pieces grabbed");
+    moveToGridPositionBlocking(x + 1, y + 1); // Move it to a position - The "x + 1, y + 1" is because this is a five-tile grid and its supposed to place in a three-tile segment
+    Serial.println("Moved!");
     magnetOff(); // Drop the piece
+    grid[x + 1][y + 1] = team + 1;
   }
 };

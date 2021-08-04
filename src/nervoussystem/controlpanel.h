@@ -16,7 +16,7 @@
 class ControlPanel{
 private:
 
-  void (*buttonToggleCallback)(bool state);
+  void (*buttonToggleCallback)(boll state);
   void (*buttonPressCallback)();
   int chars2int(char char1, char char2){
     return (char1 << 8) + char2
@@ -25,10 +25,10 @@ private:
 public:
   int Joystick_Y = 0;
   int Joystick_X = 0;
-  bool oldbuttonstate; // Same as buttonstate, just always one update behind
-  bool buttonstate; // True = pressed
-  bool turn; // True = Player 1
-  bool mode; // True = one player
+  boll oldbuttonstate; // Same as buttonstate, just always one update behind
+  boll buttonstate; // True = pressed
+  boll turn; // True = Player 1
+  boll mode; // True = one player
   
   ControlPanel(void (*togglecallback)(bool state), void (*presscallback)()){ // Function callbacks. Syntax: return_type (*<name>)(<argument list>). This is for a callback function (google it) which runs whenever the button state toggles
     buttonToggleCallback = togglecallback;
