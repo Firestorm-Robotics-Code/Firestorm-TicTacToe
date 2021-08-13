@@ -13,6 +13,10 @@ namespace lights{
         case 3:
           coms.write(2);
         break;
+        case 4:
+          coms.write(3);
+          coms.write(data);
+        break;
       }
       if (!opcode == 2){
         coms.write(data);
@@ -39,5 +43,12 @@ namespace lights{
   void chant(HardwareSerial coms, uint8_t chant){
     data[0] = chant;
     _ROUTINE(3, coms);
+  }
+  void movePiece(HardwareSerial coms, uint8_t x, uint8_t y, uint8_t x2, uint8_t y2){
+    data[0] = x;
+    data[1] = y;
+    data[2] = x2;
+    data[3] = y2;
+    _ROUTINE(4, coms);
   }
 }

@@ -42,6 +42,9 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     int maxpos;
     int doops = 0;
 
+    boll hasSlave = false;
+    Motor* slave;
+
     Motor(){ // This is a spoof motor which will not run.
       enabled = false;
     }
@@ -57,8 +60,13 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       zero_direction = zero_dir;
     }
 
+    void setSlave(Motor *theDude){
+      slave = theDude;
+      hasSlave = true;
+    }
+
     bool isFinished(){
-      return pos == goal;
+      return (pos == goal) && (hasSlave ? slave -> isFinished() : true); // This is and-exclusion. If we have no slave, there is no reason to have an and, and we simply ignore it by making it "&true".
     }
 
     void setAuxilarySwitch(int theNewSwitch){
@@ -145,30 +153,31 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     }
 
     void zero(int zerospeed){
+      if (hasSlave){
+        zeroTwo(zerospeed, slave);
+      }
       while (!zeroTasks(zerospeed));
     }
 
-    void zeroTwo(int zerospeed, Motor *motor){
+    void zeroTwo(int zerospeed, Motor *motor){ // This is mostly theoretical. It can zero two motors, but it might not hardware fault if it detects one.
+      // I am reasonably confident that it will work, but even so, we should be careful and plan for the situation that this doesn't work.
       bool timingOff = false;
       long theTime = 0;
       bool running1 = true;
       bool running2 = true;
       bool running = true;
 
-      int timeoutPoint = 10000;
-      Serial.println("Zeroing");
+      int timeoutPoint = 500;
       
       while (running){
         if (running1){
           if (zeroTasks(zerospeed)){
-            Serial.println("And a 1");
             if (timingOff){
               if (millis() < (theTime + timeoutPoint)){
                 running = false;
               }
             }
             else{
-              Serial.println("Killing 1");
               running1 = false;
               timingOff = true;
               theTime = millis();
@@ -176,16 +185,13 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
           }
         }
         if (running2){
-          Serial.println(running2);
           if (motor -> zeroTasks(zerospeed)){
-            Serial.println("And a 2");
             if (timingOff){
               if (millis() < (theTime + timeoutPoint)){
                 running = false;
               }
             }
             else{
-              Serial.println("Killing 2");
               running2 = false;
               timingOff = true;
               theTime = millis();
@@ -224,50 +230,16 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       goal = 0;
       enabled = false;
     }
-
-    void tester(){
-      if (goal == -800){
-        Serial.println("W_L1");
-      }
-      else{
-        Serial.println("B_L1");
-      }
-    }
-
-    void tester2(){
-      if (goal == -800){
-        Serial.println("W_L2");
-      }
-      else{
-        Serial.println("B_L2");
-      }
-    }
-
-    void tester3(){
-      if (goal == -800){
-        Serial.println("W_L3");
-      }
-      else{
-        Serial.println("W_L3");
-      }
-    }
-
-    void tester4(){
-      if (goal == -800){
-        Serial.println("W_L4");
-      }
-      else{
-        Serial.println("W_L4");
-      }
-    }
     
     void run(int runSpeed = 0){ // 20 microsecond pulse
       long distance = getDistance();
       if (runSpeed == 0){
+        if (hasSlave){
+          slave -> stepTasks(curSpeed, distance > 0); // Run the slave. This assumes that the slave is running the same direction, so it might be dangerous.
+        }
         stepTasks(curSpeed, distance > 0); // We know that getDistance will always be negative or positive, never zero, because of the if condition.
-        if (curSpeed != reqSpeed){
+        if (curSpeed != reqSpeed && (millis()%50 == 0)){ // Slow, 45-degree ramp.
           curSpeed += reqSpeed / abs(reqSpeed);
-          Serial.println(curSpeed);
         }
         if (stage == 0){ // If stage is zero, the pin is high. This could be an issue, potentially.
           pos += distance/abs(distance);
@@ -282,6 +254,3 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
       }
     }
 }; // This class is very minimal. It doesn't have the charm (and extra logic) of AccelStepper, but I hope we will build on it.
-
-
-// Ruled out: move, setGoal, stepTasks, 

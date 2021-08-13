@@ -1,45 +1,48 @@
 /* By Tyler Clarke with some help from Lawson Brashear
  * Code for the control panel, wrapped up in a class 
  * 
- * Uses a simple controlpanel protocol over serial at 9600 baud
- * 
- * First char is an opcode.
- * "0" (the alphanumeric, not the number) = button pressed.
- * "1" (same) = button released.
- * "2" (same again) = joystick state changed, read next four bytes (two 16-bit numbers, signed)
+ * Provides an interface for joystick and button management.
  */
  
 #include "analogReadFast.h"
-#define CHECK_BIT(var, pos) ((var) & 1 << (pos))
 
+struct ControlPanel{
+  int p1Up;
+  int p1Down;
+  int p1Left;
+  int p1Right;
+  int p1Button;
 
-class ControlPanel{
-private:
+  int p2Up;
+  int p2Down;
+  int p2Left;
+  int p2Right;
+  int p2Button;
 
-  void (*buttonToggleCallback)(boll state);
-  void (*buttonPressCallback)();
-  int chars2int(char char1, char char2){
-    return (char1 << 8) + char2
-  }
+  int selectorSwitch1;
+  int selectorSwitch2;
+  int selectorSwitch3;
 
-public:
-  int Joystick_Y = 0;
-  int Joystick_X = 0;
-  boll oldbuttonstate; // Same as buttonstate, just always one update behind
-  boll buttonstate; // True = pressed
-  boll turn; // True = Player 1
-  boll mode; // True = one player
+  int start;
   
-  ControlPanel(void (*togglecallback)(bool state), void (*presscallback)()){ // Function callbacks. Syntax: return_type (*<name>)(<argument list>). This is for a callback function (google it) which runs whenever the button state toggles
-    buttonToggleCallback = togglecallback;
-    buttonPressCallback = presscallback;
-    poll(); // First poll, sets the values
+  ControlPanel(int p1_up, int p1_down, int p1_left, int p1_right, int p1_button, int p2_up, int p2_down, int p2_left, int p2_right, int p2_button, int selector_switch_1, int selector_switch_2, int selector_switch_3, int start_button){
+    p1Up = p1_up;
+    p1Down = p1_down;
+    p1Left = p1_left;
+    p1Rigth = p1_right;
+    
+    p2Up = p2_up;
+    p2Down = p2_down;
+    p2Left = p2_left;
+    p2Right = p2_right;
+
+    selectorSwitch1 = selector_switch_1;
+    selectorSwitch2 = selector_switch_2;
+    selectorSwitch3 = selector_switch_3;
+
+    start = start_button;
   }
-  
-  void poll(){
-    if (Serial1.available()){
-      char[3] message;
-      Serial1.readBytes(message, 3);
-    }
+  void getJoystickPosition(){
+    
   }
 };
