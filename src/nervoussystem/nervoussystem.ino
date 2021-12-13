@@ -1,202 +1,58 @@
-// There is a trick to making sure you don't forget to code stuff. It is a simple trick, too.
-// If you want to do a boolean switch, and don't know what code you'll put in the true case but want a false case (else)
-// You just leave the if empty. Unfortunately, that's easy to forget and cause you a headache.
-// The solution? Put "#NOCOMPILE" in the body. It won't compile - because #NOCOMPILE is a fake directive.
-// That's your lesson for today!
-
-// Development status: near completion
-/* Tasks left: (In semi-chronological order - follow the list as best as you can.)
- *   Finish control panel interface (do this in parts through-out the other development processes as needed)
- *   Build demonstration-mode
- *   Add at least 5 demo games
- *   Check up on Lawson's minimax
- *   Build one-player-mode
- */
-// Joystick pins:
-#define JOYSTICK_1_UP 32
-#define JOYSTICK_1_DOWN 33
-#define JOYSTICK_1_LEFT 34
-#define JOYSTICK_1_RIGHT 31
-
-#define JOYSTICK_2_UP 37
-#define JOYSTICK_2_DOWN 38
-#define JOYSTICK_2_LEFT 39
-#define JOYSTICK_2_RIGHT 36
-
-// Y motor one:
-#define YMOTOR1_PUL 44
-#define YMOTOR1_DIR 45
-#define YMOTOR1_SWITCH 12
-
-// Y motor two:
-#define YMOTOR2_PUL 47
-#define YMOTOR2_DIR 48
-#define YMOTOR2_SWITCH 13
-
-// X motor:
-#define XMOTOR_PUL 50
-#define XMOTOR_DIR 51
-#define XMOTOR_SWITCH 11
-
-// Grabber mechanism:
-#define MAGNET 9
-#define ACTUATOR 10
-
-// Selector switch:
-#define SELECTOR1 41
-#define SELECTOR3 42
-
-// Buttons:
-#define PLAYBUTTON_1 35
-#define PLAYBUTTON_2 40
-#define STARTBUTTON 43
-
-
-/* Further information:
- *  Enter debugging mode: Go to demonstration mode and press the start button three times in quick succession (<3 seconds).
- *  Cheat: Perform the Konami Code (minus the B-A part) in 5 seconds and win instantaneously.
+/* By Tyler Clarke
+ *  Pulling-it-all-together file that allows a choice between any of my many tests.
+ *  
+ *  Instructions:
+ *    Comment all "#define" statements. Commenting is done by appending "//" in front of any statement which doesn't have it already.
+ *    Uncomment (remove the "//") the one referring to the file you want to test.
+ *  
+ *  Determining the one you want:
+ *    Every name is in the format "Category_number", so a test #1 would be "#define TEST_1".
+ *    Every name has an optional third part, the name. A Blorky test #1 would be "#define TEST_1_BLORKY".
+ *  
+ *  If you get an error during compilation, the first thing you need to do is make sure that exactly one is uncommented.
+That might just be the issue, whether less than or more than.
+ *  
+ *  
+ *  Safety:
+ *    ALWAYS be ready to pull the barrel jack. The switch DOES NOT power down fast enough.
+ *    NEVER run the bepro with the USB and the barrel jack in at the same time. I do not assume any responsibility for the consequences if you do.
+ *    ALWAYS mark failed tests with "FAILURE" and comment them. An example: "// FAILURE #define TEST_1_TIMMY". This prevents them from compiling.
+ *    NEVER leave tests not marked with "UTTERLY SAFE" running.
+ *    ALWAYS make sure it zeroes. If it doesn't hit the switch and stops, there is something very wrong and you should pull the plug.
+ *    NEVER run the BePro if you have changed the wiring, until you have verified the wiring against the pinouts described in the top part of the file.
+ *    ALWAYS keep your hands away from the rails! It would not be a pretty scene if your finger is crushed and ground in the screw.
+For assistance with this, call me up.
+ *    NEVER let pride get in the way of these rules! I cannot stress this enough. It doesn't matter if you think you are right. Always assume that you are wrong.
+ *    
+ *    
+ *  Extra instructions will be provided for different applications. These instructions will always be clear - if they aren't, ask!
+ *    
+ *    
+ *  What you have read here is a minimal briefing on usage of this code. If you have questions, ask.
+ *  I don't wish to hear that someone ruined the BePro because they didn't understand my instructions.
  */
 
-/* Hardware fault logging paradigm:
- *  Every log message MUST begin with "<type> FAULT DETECTED - ".
- *  Types may be SOFTWARE or HARDWARE.
- *  Every log message must then provide a brief summary of the problem, e.g. "The selector switch is broken"
- *  Every log message must then provide the logic location of the fault report, in the format file::class::function::logic-level-1::logic-level-2...::logic-level-n.
- *  Every log message may finally include instructions to solve the issue, but only if the issue is easily solved.
- */
 
-typedef bool boll; // This is a tribute to Lawson
 
-#include "motor.h" // This contains class(es) to control motors.
-#include "grid.h" // This contains class(es) to manage the grid.
-#include "lightcontrols.h" // These manage lights, which are not yet implemented.
-#include "controlpanel.h" // A set of classes for joysticks and buttons.
-#include "game.h" // Classes for game management
-// TODO: Make all these codes a bit more object oriented.
 
-Play basic_test[5] = { // An array of "play" objects, each of which is [type, x, y], for preset games.
-  {1, 1}, // O at center
-  {1, 0}, // X at one down from center
-  {0, 1}, // O at one left from center
-  {0, 0}, // X at bottom
-  {2, 1} // O at one right from center, winning the game
-};
+ // !!!!!!!!! BY CROSSING THIS LINE you hereby acknowledge that anything that doesn't compile is most likely your fault. I have usually tested things.
+ // If you haven't read the info piece above, you should do so. !!!!!!!!!!
 
-Play brandonsGame[] = {
-  {0, 2},
-  {2, 2},
-  {2, 0},
-  {1, 1},
-  {0, 0},
-  {0, 1},
-  {1, 0}
-};
 
-Play tie[] = {
-  {1, 1},
-  {2, 2},
-  {1, 2},
-  {1, 0},
-  {2, 0},
-  {0, 2},
-  {0, 1},
-  {2, 1},
-  {0, 0}
-};
 
-RecordedGame allGames[] = {
-  {basic_test, 5},
-  {brandonsGame, 7},
-  {tie, 9}
-};
 
-// WE SERIOUSLY NEED A BLEED RESISTOR TO PULL THE RELAY DOWN, OR THE BEPRO PEOPLE ARE IN FOR A **NASTY** SURPRISE!!!!!
+ /*****   CONSEQUENCES OF FAILURE TO READ THE PREVIOUS COMMENTS, OR INDEED THIS ONE, ARE ENTIRELY YOUR FAULT!            *****/
+ /*****   I ASSUME THAT YOU HAVE READ EVERYTHING CAREFULLY, AND ALL THE CODE BELOW IS NOT TO BE EDITED UNTIL YOU HAVE!   *****/
 
-Motor xmotor(XMOTOR_PUL, XMOTOR_DIR, true, XMOTOR_SWITCH, false, 24 * 800); // X motor object.
-Motor ymotor(YMOTOR1_PUL, YMOTOR1_DIR, true, YMOTOR1_SWITCH, false, 24 * 800); // First Y motor object.
-Motor ymotorTwo(YMOTOR2_PUL, YMOTOR2_DIR, true, YMOTOR2_SWITCH, false, 24 * 800); // Second Y motor object.
 
-// Grid object:
-Grid manager(&xmotor, &ymotor, &ymotorTwo, 4094      , MAGNET    , ACTUATOR    , 12 * 800 + 912 - 2047, 12 * 800 + 125        , -4094, -4094             , -8460 + 100, -8189 , 8360 - 25, -8189 + 100);
-//           X motor, y motor(s)         , tile width, magnet pin, actuator pin, x and y offset                              , tic-tac-toe grid x and y , O row x and y      , X row x and y
-// These numbers are calculated based on the CAD model. If we run into issues, redo the measurements in inches and multiply by 800 for each.
 
-FourJoystick joystick1(JOYSTICK_1_UP, JOYSTICK_1_DOWN, JOYSTICK_1_LEFT, JOYSTICK_1_RIGHT); // Player one joystick
-PushButton endTurn1(PLAYBUTTON_1); // Player 1 button
 
-FourJoystick joystick2(JOYSTICK_2_UP, JOYSTICK_2_DOWN, JOYSTICK_2_LEFT, JOYSTICK_2_RIGHT); // Player two joystick
-PushButton endTurn2(PLAYBUTTON_2); // Player 2 button
+#define PRIMARY_1 // This one is known to work, but not very well - Auto only has one game, 1-player is broken, and 2-player is working thoroughly.
 
-PushButton start(STARTBUTTON); // Start button
-ThreeSelectorSwitch gameMode(SELECTOR1, SELECTOR3); // Mode select. This one is interesting because the only digital pins are for mode 1 and mode 3 - you know its on mode 2 if neither trigger.
+//#define TEST_1_FIXINGAI // Fixin' up the AI, part 1. This one will hopefully play 1-player.
 
-TwoPlayerGame twoPlayerMode(&manager, &joystick1, &endTurn1, &joystick2, &endTurn2);
-DemonstrationGame demonstrationMode(&manager, allGames, 1);
 
-void setup(){ /* Setup code here. */
-  Serial.begin(9600); // Start Serial.
-  manager.setSpeed(800 * 3); // One inch per second is 800, so all of the motors are set to 3x.
-  xmotor.setSpeed(800 * 4); // Change the X motor to 4x.
-  manager.zero();
-}
 
-bool debugMode(){ // Debugging mode. Activates if the command "debug" is sent from a computer.
-  if (Serial.available()){
-    String data = Serial.readString();
-    Serial.println(data);
-    if (data.substring(0,5) == "xmove"){
-      xmotor.move(data.substring(6).toInt());
-    }
-    else if (data.substring(0, 5) == "ymove"){
-      ymotor.move(data.substring(6).toInt());
-      Serial.println("Request acknowledged.");
-    }
-    else if (data.substring(0, 6) == "xspeed"){
-      xmotor.setSpeed(data.substring(7).toInt());
-    }
-    else if (data.substring(0, 6) == "yspeed"){
-      ymotor.setSpeed(data.substring(7).toInt());
-    }
-    else if (data.substring(0, 5) == "yzero"){
-      ymotor.zeroTwo(400, &ymotorTwo);
-    }
-    else if (data.substring(0, 4) == "exit"){
-      return false;
-    }
-  }
-  xmotor.run();
-  ymotor.run();
-  return true;
-}
-
-void loop(){ /* This is the mainloop. */
-  if (Serial.available()){
-    if (Serial.readString() == "debug"){
-      while (debugMode());
-    }
-  }
-  manager.run();
-  gameMode.poll();
-  start.poll();
-  if (start.wasButtonReleased() && !twoPlayerMode.playing){ // When 1-player-mode is in it should be added in the same way the two Player Mode was added.
-    if (demonstrationMode.playing){
-      demonstrationMode.playing = false;
-      manager.cancel();
-    }
-    if (gameMode.position == 0){
-      demonstrationMode.newGame();
-    }
-    if (gameMode.position == 2){
-      twoPlayerMode.newGame();
-    }
-  }
-  if (twoPlayerMode.playing){
-    twoPlayerMode.run();
-  }
-  else if (demonstrationMode.playing){
-    demonstrationMode.run();
-  }
-}
-/* Sample gameplay:
- *  First, set selector to 1v1 and press game start. It will reset the board if necessary and will zero.
- */
+#ifdef PRIMARY_1      // If you uncommented PRIMARY_1, this will add whatever code is between it and the next #endif to the file.
+  #include "1.h"      // Thus, this file is included.
+#endif                // Exits the if condition.

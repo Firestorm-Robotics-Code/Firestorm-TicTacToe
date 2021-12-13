@@ -4,60 +4,71 @@
 
 #include <Adafruit_NeoPixel.h>
 
-namespace lights{
-  char data[8] = "\0\0\0\0\0\0\0\0";
-  boll ready = false;
-  boll helloSent = false;
-  void _ROUTINE(int opcode, HardwareSerial coms){ // Opcodes: 1: hello, 2: blank, 3: chant
-    if (!ready){
-      if (!helloSent || opcode == 1){
-        coms.write(1);
-      }
-    }
-    else{
-      switch (opcode){
-        case 3:
-          coms.write(2);
-        break;
-        case 4:
-          coms.write(3);
-          coms.write(data);
-        break;
-      }
-      if (!opcode == 2){
-        coms.write(data);
-      }
-    }
-    if (coms.available()){
-      char data = coms.read();
-      if (data == 1){ // Hello acknowledged!
-        ready = true;
-      }
-    }
+#define ASK 1
+#define ASK_IS_FINISHED 1
+
+#define ANIMATE 1
+#define A_CHANT_X 1
+#define A_CHANT_O 2
+#define A_CHANT_TIE 3
+
+#define INSTANT 2
+#define I_CURSOR_DRAW 1
+#define I_CURSOR_SET_POS 2
+#define I_CURSOR_SET_COLOR 3
+#define I_CURSOR_ERASE 4
+
+struct LightsController{
+  HardwareSerial *coms;
+  bool blocking;
+  
+  LightsController(HardwareSerial *serial){
+    coms = serial;
   }
-  void hello(HardwareSerial coms){
-    _ROUTINE(1, coms);
+  
+  void setBlocking(bool block){
+    blocking = block;
   }
-  void run(HardwareSerial coms){
-    _ROUTINE(2, coms);
-  }
-  void wait_until_ready(HardwareSerial coms){
-    while (!ready){
-      _ROUTINE(2, coms);
+
+  void waitUntilFinished(){
+    while (coms -> available() == 0);
+    int garbage = coms -> read(); // NEEDSFIX: Need to fix the type, eventually
+    // I'm very eww: I constantly mix up "Serial" and "coms". Gotta get over my weird insanity.
+    if (!(garbage == 1)){
+      unknownfault("The light controller is not responding correctly. Give the connection a cursory examination; if it does not give results, do NOT mess with it further.", "lightcontrols.h::LightsController::waitUntilFinished::if.1");
+      Serial.print("Light controller responded: ");
+      Serial.println(garbage);
     }
   }
-  void chant(HardwareSerial coms, uint8_t chant){
-    data[0] = chant;
-    _ROUTINE(3, coms);
+
+  void animate(uint8_t opcode){
+    coms -> write(ANIMATE);
+    coms -> write(opcode);
   }
-  void movePiece(HardwareSerial coms, uint8_t x, uint8_t y, uint8_t x2, uint8_t y2){
-    data[0] = x;
-    data[1] = y;
-    data[2] = x2;
-    data[3] = y2;
-    _ROUTINE(4, coms);
+
+  void setCursorPos(uint8_t x, uint8_t y){
+    coms -> write(INSTANT);
+    coms -> write(I_CURSOR_SET_POS);
+    coms -> write(x);
+    coms -> write(y);
+    drawCursor();
   }
-}
+
+  void setCursorColor(bool color){
+    coms -> write(INSTANT);
+    coms -> write(I_CURSOR_SET_COLOR);
+    coms -> write(color);
+    drawCursor();
+  }
+
+  void drawCursor(){
+    coms -> write(INSTANT);
+    coms -> write(I_CURSOR_ERASE);
+    waitUntilFinished(); // So we don't have buffer overflow
+    coms -> write(INSTANT);
+    coms -> write(I_CURSOR_DRAW);
+  }
+};
 
 struct NeoPixelController{
   uint8_t numLights;

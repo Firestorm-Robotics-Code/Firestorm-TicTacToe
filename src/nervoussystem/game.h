@@ -9,15 +9,16 @@ if (game.playing){
   game.run();
 }
  */
-//#include "minimax.h"
  
 struct Game{
   Grid *manager;
   bool playing = false;
 
   NeoPixelController ringLight{12, 22};
+  LightsController *lightGrid;
 
   bool turn = true;
+  bool hasLights = false;
   uint8_t headX = 0;
   uint8_t headY = 0;
 
@@ -25,6 +26,14 @@ struct Game{
 
   Game(Grid *management){
     manager = management;
+  }
+
+  void assignLights(LightsController *lights){
+    lightGrid = lights;
+    hasLights = true;
+  }
+
+  virtual void tasks(){ // Leave it empty so we're just overriding it in the children. Virtual makes it overridable.
   }
   
   void run(){
@@ -40,9 +49,6 @@ struct Game{
     if (headY > 3){ // Unsigned integer, so one under 0 = 255 or 256
       headY = 0;
     }
-    if (manager -> isFinished()){
-      doWinnerStuff();
-    }
     if (turn != oldTurn){
       if (!turn){
         ringLight.swirly(255, 0, 0, 125);
@@ -51,6 +57,21 @@ struct Game{
         ringLight.swirly(0, 0, 255, 125);
       }
       oldTurn = turn;
+    }
+    if (manager -> isFinished()){
+      doWinnerStuff();
+    }
+    tasks();
+    if (Serial.available()){
+      String data = "";
+      while (Serial.available()){
+        data += Serial.readString(); // Read out everything.
+      }
+      if (data.substring(0, 5) == "place"){ // place 1 1 plays in the center. Allows me to do simulations without walking a lot.
+        manager -> playPiece(turn, data.substring(6, 7).toInt(), data.substring(8, 9).toInt());
+        manager -> runUntilFinished();
+        turn = !turn;
+      }
     }
   }
   
@@ -65,66 +86,15 @@ struct Game{
   }
 
   void danceTie(){
-    ringLight.setAsOneColor(255, 255, 255);
-    ringLight.pixels -> show();
-    delay(500);
-    ringLight.pixels -> clear();
-    ringLight.pixels -> show();
-    delay(500);
-    ringLight.setAsOneColor(255, 255, 255);
-    ringLight.pixels -> show();
-    delay(500);
-    ringLight.pixels -> clear();
-    ringLight.pixels -> show();
-    delay(500);
-    ringLight.setAsOneColor(255, 255, 255);
-    ringLight.pixels -> show();
-    delay(500);
-    ringLight.pixels -> clear();
-    ringLight.pixels -> show();
-    delay(500);
+    lightGrid -> animate(A_CHANT_TIE);
   }
   
   void danceWin(int x1, int y1, int x2, int y2){
     if (!turn){
-      ringLight.setAsOneColor(255, 0, 0);
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.pixels -> clear();
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.setAsOneColor(255, 0, 0);
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.pixels -> clear();
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.setAsOneColor(255, 0, 0);
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.pixels -> clear();
-      ringLight.pixels -> show();
-      delay(500);
+      lightGrid -> animate(A_CHANT_X);
     }
     else{
-      ringLight.setAsOneColor(0, 0, 255);
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.pixels -> clear();
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.setAsOneColor(0, 0, 255);
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.pixels -> clear();
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.setAsOneColor(0, 0, 255);
-      ringLight.pixels -> show();
-      delay(500);
-      ringLight.pixels -> clear();
-      ringLight.pixels -> show();
-      delay(500);
+      lightGrid -> animate(A_CHANT_O);
     }
   }
   
@@ -139,14 +109,12 @@ struct Game{
       danceWin(firstpos[0], firstpos[1], secondpos[0], secondpos[1]);
     }
     if (winner != 0){
-      manager -> reset();
-      manager -> runUntilFinished();
       playing = false;
       headX = 0;
       headY = 0;
-      delay(1000);
       manager -> reset();
-      manager -> runUntilFinished(); // We can't rely on it to not change later, so we insure it.
+      manager -> runUntilFinished();
+      delay(1000);
     }
   }
 };
@@ -165,8 +133,7 @@ struct TwoPlayerGame : public Game{
     player2Button = but2;
   }
   
-  void run(){
-    Game::run(); // Need to call the original.
+  void tasks(){ // No longer need to call Game::run.
     player1Joystick -> poll();
     player2Joystick -> poll();
     player1Button -> poll();
@@ -184,7 +151,13 @@ struct TwoPlayerGame : public Game{
       manager -> runUntilFinished(); // No interruptions here!
       turn = !turn;
     }
-    manager -> moveToAPosition(headX, headY);
+    if (hasLights){
+      lightGrid -> setCursorPos(headX, headY);
+      lightGrid -> drawCursor();
+    }
+    else{
+      manager -> moveToAPosition(headX, headY);
+    }
   }
 };
 
@@ -201,16 +174,17 @@ struct DemonstrationGame : public Game{
   }
   void doWinnerStuff(){
     Game::doWinnerStuff();
-    playing = true; // NEVER exit the playing loop for this one.
   }
   void newGame(){
-    curGameNumber = random(gamesNumber);
+    curGameNumber = random(0, gamesNumber);
+    Serial.print("Random game number: ");
+    Serial.println(curGameNumber);
     curGame = recordedGames[curGameNumber];
     playingRecordedGame = true;
     curMove = 0;
     Game::newGame();
   }
-  void run(){
+  void tasks(){
     if (playingRecordedGame){
       if (manager -> isFinished()){
         manager -> playPiece(turn, curGame.moves[curMove].x, curGame.moves[curMove].y);
@@ -221,8 +195,44 @@ struct DemonstrationGame : public Game{
         }
       }
     }
-    turn = !turn; // v
-    Game::run();
-    turn = !turn; // ^ These cancel out
+  }
+};
+
+struct OnePlayerGame : public Game{
+  FourJoystick *player1Joystick;
+  PushButton *player1Button;
+  void (*autoFunction)(uint8_t[3][3], bool, uint8_t*);
+  
+  OnePlayerGame(Grid *management, FourJoystick *joy1, PushButton *but1, void (*function)(uint8_t[3][3], bool, uint8_t*)) : Game(management){    
+    player1Joystick = joy1;
+    player1Button = but1;
+    autoFunction = function;
+  }
+  
+  void tasks(){
+    player1Joystick -> poll();
+    player1Button -> poll();
+    if (turn){
+      headX += player1Joystick -> getXChange();
+      headY += player1Joystick -> getYChange();
+      if (player1Button -> wasButtonReleased() && !manager -> positionOccupied(headX, headY)){
+        manager -> playPiece(turn, headX, headY);
+        manager -> runUntilFinished(); // No interruptions here!
+        turn = !turn;
+      }
+      manager -> moveToAPosition(headX, headY);
+    }
+    else{
+      uint8_t marvin[2];
+      autoFunction(manager -> grid, turn, marvin); // Yucky, but this can be smoothed out later.
+      if (!manager -> positionOccupied(marvin[0], marvin[1])){
+        manager -> playPiece(turn, marvin[0], marvin[1]);
+        manager -> runUntilFinished();
+        turn = !turn;
+      }
+      else{
+        Serial.println("no.");
+      }
+    }
   }
 };

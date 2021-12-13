@@ -215,7 +215,7 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
         }
         if (timingOff && !(millis() < (theTime + timeoutPoint))){
           while(!Serial);
-          Serial.println("HARDWARE FAULT DETECTED - Either the slides are damaged beyond safe self-repair, or the limit switches are damaged. Location of the fault: motor.h::Motor::zeroTwo::while.0::if.3. IF the issue seems to be because the slides are crooked, and you have not already followed these instructions, simply power down the system and manually zero them, remove any obstructions on the slide path, then restart.");
+          hardfault("motor.h::Motor::zeroTwo::while.0::if.3");
           while(1);
         }
       }

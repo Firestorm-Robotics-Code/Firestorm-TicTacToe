@@ -105,6 +105,9 @@ public:
     xmotor -> zero(400);
     ymotor -> zero(400);
   }
+  void cheat(uint8_t x, uint8_t y){
+    
+  }
   void setSpeed(int speed){
     ymotor -> setSpeed(speed);
     xmotor -> setSpeed(speed);
