@@ -21,6 +21,8 @@
 struct LightsController{
   HardwareSerial *coms;
   bool blocking;
+  uint8_t cursorX = 0;
+  uint8_t cursorY = 0;
   
   LightsController(HardwareSerial *serial){
     coms = serial;
@@ -47,11 +49,13 @@ struct LightsController{
   }
 
   void setCursorPos(uint8_t x, uint8_t y){
-    coms -> write(INSTANT);
-    coms -> write(I_CURSOR_SET_POS);
-    coms -> write(x);
-    coms -> write(y);
-    drawCursor();
+    if (x != cursorX || y != cursorY){
+      coms -> write(INSTANT);
+      coms -> write(I_CURSOR_SET_POS);
+      coms -> write(x);
+      coms -> write(y);
+      drawCursor();
+    }
   }
 
   void setCursorColor(bool color){
@@ -59,6 +63,7 @@ struct LightsController{
     coms -> write(I_CURSOR_SET_COLOR);
     coms -> write(color);
     drawCursor();
+    waitUntilFinished();
   }
 
   void drawCursor(){
@@ -69,6 +74,30 @@ struct LightsController{
     coms -> write(I_CURSOR_DRAW);
   }
 };
+
+
+struct BetterLightsController{ // Finally gonna cave and make something better than that ^ piece of crap. 'Tis going to be something like TCP:
+  // First, I send a "want to send command", then wait for it to send an "ok, I'm ready" response. If it doesn't give "OK, I'm ready" in time or gives something else,
+  // I will wait the very short cooldown period then try again. When it finally works, send a byte for the type of action. If it has fields, wait for it to say "OK, need fields"
+  // Then I will send fields as a char*.
+  HardwareSerial *coms;
+  uint8_t stage = 0;
+  
+  BetterLightsController(HardwareSerial *serial){
+    coms = serial;
+  }
+  
+  bool beginHandshake(){
+    coms.write(1);
+    while (!coms.available());
+    if (coms.read() == 1){
+      stage = 1;
+      return true;
+    }
+    return false;
+  }
+}
+
 
 struct NeoPixelController{
   uint8_t numLights;

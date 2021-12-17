@@ -137,7 +137,7 @@ void setup(){ /* Setup code here. */
   xmotor.setSpeed(800 * 10); // Override the manager; change the X motor to 4x because it can go faster without breaky-breaky-ing.
   manager.zero();
   randomSeed(analogRead(A0));
-  twoPlayerMode.assignLights(&lights);
+  //twoPlayerMode.assignLights(&lights); < This is the call that was breaking it. Weird how one single titchy function can throw off an entire program...
 }
 
 void loop(){ /* This is the mainloop. */
