@@ -4,19 +4,9 @@
  * The grid it sees is actually three disjointed parts, two 5-rows of X's and O's, and a 3x3.
  * The positions (relative to start-point) can be adjusted because I finally decided I was going about it the stupidest way possible.
  * 
- * Uses inches, not centimeters - multiply by 2.54
+ * Uses inches, not centimeters - multiply by 2.54. I hate this but we've no choice.
  */
- 
 
-struct Play{
-  int x;
-  int y;
-};
-
-struct RecordedGame{
-  Play* moves;
-  uint8_t length;
-};
 
 struct Grid{
   int tilewidth;
@@ -105,8 +95,21 @@ public:
     xmotor -> zero(400);
     ymotor -> zero(400);
   }
-  void cheat(uint8_t x, uint8_t y){
-    
+  void cheat(bool turn){
+    moveToAPiece(turn);
+    magnetOn();
+    if (findEmptySlot(theType)){
+      xmotor -> setGoal(theRealPositionX);
+      ymotor -> setGoal(theRealPositionY);
+    }
+    runUntilFinished();
+    magnetOff();
+    /*if (theType){ // Reverse it. Oh, how I love boolean logic...
+      XPiecesLeft ++;
+    }
+    else{
+      OPiecesLeft ++;
+    }*/
   }
   void setSpeed(int speed){
     ymotor -> setSpeed(speed);

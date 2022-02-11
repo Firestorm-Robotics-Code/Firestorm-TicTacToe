@@ -3,15 +3,26 @@
  *  Classes for game management. Makes it more organized.
  *  
  *  Simple game workflow:
- *  Create object "game" of the TwoPlayerGame class
+ *  Create object "game" of the Game class
  *  In void loop, do:
 if (game.playing){
   game.run();
 }
  */
- 
+
+struct Game; // Predefinition.
+
+
+struct Controller {
+  virtual void run(Game* game){} // Override this.
+  virtual void newGame(){} // Override this too.
+};
+
+
 struct Game{
   Grid *manager;
+  Controller *player1;
+  Controller *player2;
   bool playing = false;
 
   NeoPixelController ringLight{12, 22};
@@ -24,19 +35,35 @@ struct Game{
 
   bool oldTurn = true;
 
-  Game(Grid *management){
+  Game(Grid *management, Controller* p1, Controller* p2){
     manager = management;
+    player1 = p1;
+    player2 = p2;
   }
 
   void assignLights(LightsController *lights){
     lightGrid = lights;
     hasLights = true;
   }
-
-  virtual void tasks(){ // Leave it empty so we're just overriding it in the children. Virtual makes it overridable.
-  }
   
-  void run(){
+  bool run(){
+    if (turn){
+      player1 -> run(this);
+    }
+    else{
+      player2 -> run(this);
+    }
+    
+    if (turn != oldTurn){
+      if (turn){
+        ringLight.swirly(255, 0, 0, 125);
+      }
+      else{
+        ringLight.swirly(0, 0, 255, 125);
+      }
+      oldTurn = turn;
+    }
+    
     if (headX == 3){ // One more than two
       headX = 2;
     }
@@ -49,35 +76,53 @@ struct Game{
     if (headY > 3){ // Unsigned integer, so one under 0 = 255 or 256
       headY = 0;
     }
-    if (turn != oldTurn){
-      if (!turn){
-        ringLight.swirly(255, 0, 0, 125);
-      }
-      else{
-        ringLight.swirly(0, 0, 255, 125);
-      }
-      oldTurn = turn;
-    }
+    
     if (manager -> isFinished()){
-      doWinnerStuff();
+      if (doWinnerStuff()){
+        Serial.println("It's working");
+        return true;
+      }
+      // We don't want to exit the function if it returns false.
     }
-    tasks();
+
+    if (hasLights){
+      lightGrid -> setCursorPos(headX, headY);
+    }
+    manager -> moveToAPosition(headX, headY);
+    // Dev stuff
     if (Serial.available()){
       String data = "";
       while (Serial.available()){
         data += Serial.readString(); // Read out everything.
       }
       if (data.substring(0, 5) == "place"){ // place 1 1 plays in the center. Allows me to do simulations without walking a lot.
-        manager -> playPiece(turn, data.substring(6, 7).toInt(), data.substring(8, 9).toInt());
+        uint8_t x = data.substring(6, 7).toInt();
+        uint8_t y = data.substring(8, 9).toInt();
+        manager -> playPiece(turn, x, y);
         manager -> runUntilFinished();
         turn = !turn;
       }
     }
+    return false;
+  }
+
+  void place(){
+    if (!manager -> positionOccupied(headX,headY)){
+      if (hasLights){
+        lightGrid -> setPiece(turn, headX, headY);
+      }
+      manager -> playPiece(turn, headX, headY);
+      manager -> runUntilFinished();
+      turn = !turn;
+    }
   }
   
   void newGame(){
+    player1 -> newGame();
+    player2 -> newGame();
+    turn = true;
     playing = true;
-    if (!turn){
+    if (turn){
       ringLight.swirly(255, 0, 0, 125);
     }
     else{
@@ -90,7 +135,7 @@ struct Game{
   }
   
   void danceWin(int x1, int y1, int x2, int y2){
-    if (!turn){
+    if (turn){
       lightGrid -> animate(A_CHANT_X);
     }
     else{
@@ -98,7 +143,7 @@ struct Game{
     }
   }
   
-  void doWinnerStuff(){
+  bool doWinnerStuff(){
     uint8_t firstpos[2];
     uint8_t secondpos[2];
     uint8_t winner = manager -> checkWinner(firstpos, secondpos);
@@ -108,131 +153,140 @@ struct Game{
     else if (winner == 2){
       danceWin(firstpos[0], firstpos[1], secondpos[0], secondpos[1]);
     }
-    if (winner != 0){
+    if (winner != 0){ // Either case
       playing = false;
       headX = 0;
       headY = 0;
       manager -> reset();
       manager -> runUntilFinished();
+      newGame(); // Defaultify settings for a game.
       delay(1000);
+      return true;
     }
+    return false;
+  }
+
+  void cheat(){
+    manager -> runUntilFinished();
+    manager -> cheat(turn);
   }
 };
 
-struct TwoPlayerGame : public Game{
-  FourJoystick *player1Joystick;
-  PushButton *player1Button;
-  FourJoystick *player2Joystick;
-  PushButton *player2Button;
-  
-  TwoPlayerGame(Grid *management, FourJoystick *joy1, PushButton *but1, FourJoystick *joy2, PushButton *but2) : Game(management){    
-    player1Joystick = joy1;
-    player1Button = but1;
-    
-    player2Joystick = joy2;
-    player2Button = but2;
-  }
-  
-  void tasks(){ // No longer need to call Game::run.
-    player1Joystick -> poll();
-    player2Joystick -> poll();
-    player1Button -> poll();
-    player2Button -> poll();
-    if (turn){
-      headX += player1Joystick -> getXChange();
-      headY += player1Joystick -> getYChange();
-    }
-    else{
-      headX += player2Joystick -> getXChange();
-      headY += player2Joystick -> getYChange();
-    }
-    if (((turn && player1Button -> wasButtonReleased()) || (!turn && player2Button -> wasButtonReleased())) && !manager -> positionOccupied(headX, headY)){
-      manager -> playPiece(turn, headX, headY);
-      manager -> runUntilFinished(); // No interruptions here!
-      turn = !turn;
-    }
-    if (hasLights){
-      lightGrid -> setCursorPos(headX, headY);
-      lightGrid -> drawCursor();
-    }
-    else{
-      manager -> moveToAPosition(headX, headY);
-    }
-  }
-};
 
-struct DemonstrationGame : public Game{
-  RecordedGame *recordedGames;
-  uint8_t gamesNumber;
-  bool playingRecordedGame = false;
-  RecordedGame curGame;
-  uint8_t curGameNumber;
-  uint8_t curMove;
-  DemonstrationGame(Grid *management, RecordedGame *games, uint8_t numberOfGames) : Game(management){
-    recordedGames = games;
-    gamesNumber = numberOfGames;
-  }
-  void doWinnerStuff(){
-    Game::doWinnerStuff();
-  }
-  void newGame(){
-    curGameNumber = random(0, gamesNumber);
-    Serial.print("Random game number: ");
-    Serial.println(curGameNumber);
-    curGame = recordedGames[curGameNumber];
-    playingRecordedGame = true;
-    curMove = 0;
-    Game::newGame();
-  }
-  void tasks(){
-    if (playingRecordedGame){
-      if (manager -> isFinished()){
-        manager -> playPiece(turn, curGame.moves[curMove].x, curGame.moves[curMove].y);
-        turn = !turn;
-        curMove ++;
-        if (curMove > curGame.length - 1){
-          playingRecordedGame = false;
-        }
-      }
-    }
-  }
-};
-
-struct OnePlayerGame : public Game{
-  FourJoystick *player1Joystick;
-  PushButton *player1Button;
-  void (*autoFunction)(uint8_t[3][3], bool, uint8_t*);
-  
-  OnePlayerGame(Grid *management, FourJoystick *joy1, PushButton *but1, void (*function)(uint8_t[3][3], bool, uint8_t*)) : Game(management){    
-    player1Joystick = joy1;
-    player1Button = but1;
-    autoFunction = function;
+struct JoystickController : Controller {
+  FourJoystick* mjoy;
+  PushButton* mbut;
+  uint8_t konami = 0;
+  void assign(FourJoystick* joy, PushButton* but){
+    mjoy = joy;
+    mbut = but;
   }
   
-  void tasks(){
-    player1Joystick -> poll();
-    player1Button -> poll();
-    if (turn){
-      headX += player1Joystick -> getXChange();
-      headY += player1Joystick -> getYChange();
-      if (player1Button -> wasButtonReleased() && !manager -> positionOccupied(headX, headY)){
-        manager -> playPiece(turn, headX, headY);
-        manager -> runUntilFinished(); // No interruptions here!
-        turn = !turn;
-      }
-      manager -> moveToAPosition(headX, headY);
-    }
-    else{
-      uint8_t marvin[2];
-      autoFunction(manager -> grid, turn, marvin); // Yucky, but this can be smoothed out later.
-      if (!manager -> positionOccupied(marvin[0], marvin[1])){
-        manager -> playPiece(turn, marvin[0], marvin[1]);
-        manager -> runUntilFinished();
-        turn = !turn;
+  void run(Game* game){
+    mjoy -> poll();
+    if (mjoy -> rightReleased()){
+      game -> headX ++;
+      if (konami == 0 || konami == 2){
+        konami ++;
+        Serial.println("Hur hur 1");
       }
       else{
-        Serial.println("no.");
+        konami = 0;
       }
     }
+    if (mjoy -> leftReleased()){
+      game -> headX --;
+      if (konami == 1 || konami == 3){
+        konami ++;
+        Serial.println("Hur hur 2");
+      }
+      else{
+        konami = 0;
+      }
+    }
+    if (mjoy -> downReleased()){
+      game -> headY --;
+      if (konami == 6){
+        konami ++;
+        Serial.println("Hur hur 3");
+      }
+      else if (konami == 7){
+        Serial.println("Hur hur");
+        game -> cheat();
+      }
+      else{
+        konami = 0;
+      }
+    }
+    if (mjoy -> upReleased()){
+      game -> headY ++;
+      if (konami == 4 || konami == 5){
+        konami ++;
+        Serial.println("Hur hur 4");
+        game -> cheat();
+      }
+      else{
+        konami = 0;
+      }
+    }
+    mbut -> poll();
+    if (mbut -> wasButtonReleased()){
+      game -> place();
+    }
+  }
+};
+
+struct ComputerController : Controller{
+  void run(Game* game){
+    game -> headX = random(0, 3);
+    game -> headY = random(0, 3);
+    game -> place();
+  }
+};
+
+struct Play{
+  int x;
+  int y;
+};
+
+struct RecordedGame{
+  Play* moves;
+  uint8_t length;
+};
+
+struct DemonstrationController : Controller{
+  RecordedGame *recordedGames;
+  int gameNum;
+  int moveNum = 0;
+  unsigned int numGames;
+  bool postThisTime = false;
+  void run(Game* game){
+    if (postThisTime){
+      delay(500);
+      game -> place();
+      postThisTime = false;
+    }
+    else{
+      game -> headX = recordedGames[gameNum].moves[moveNum].x;
+      game -> headY = recordedGames[gameNum].moves[moveNum].y;
+      moveNum ++;
+      postThisTime = true;
+    }
+  }
+
+  void assign(RecordedGame *regame, unsigned int len){
+    recordedGames = regame;
+    numGames = len;
+    Serial.print("New game len: ");
+    Serial.println(len);
+    Serial.println(numGames);
+  }
+
+  void newGame(){
+    Serial.println("I don't suck");
+    gameNum = random(0, numGames);
+    Serial.println(numGames);
+    Serial.println(gameNum);
+    moveNum = 0;
   }
 };

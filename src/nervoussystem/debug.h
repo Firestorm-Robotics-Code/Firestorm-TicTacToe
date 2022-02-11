@@ -5,7 +5,7 @@
   
 }*/
 
-bool debugMode(LightsController lights){ // Debugging mode. Activates if the command "debug" is sent from a computer.
+bool debugMode(LightsController* lights){ // Debugging mode. Activates if the command "debug" is sent from a computer.
   if (Serial.available()){
     String data = Serial.readString();
     Serial.println(data);
@@ -28,12 +28,10 @@ bool debugMode(LightsController lights){ // Debugging mode. Activates if the com
     else */if (data.substring(0, 4) == "exit"){
       return false;
     }
-    else if (data.substring(0, 10) == "testLights"){/*
-      lights.control(SAY_CHANT_O);
-      lights.waitUntilFinished();
-      lights.control(SAY_CHANT_X);
-      lights.waitUntilFinished();
-      lights.control(SAY_CHANT_TIE);*/
+    else if (data.substring(0, 10) == "testLights"){
+      lights -> setCursorPos(1, 1);
+      lights -> waitUntilFinished();
+      lights -> drawCursor();
     }
   }
   //xmotor.run();

@@ -11,18 +11,24 @@
 #define A_CHANT_X 1
 #define A_CHANT_O 2
 #define A_CHANT_TIE 3
+#define A_ZERO 4
 
 #define INSTANT 2
 #define I_CURSOR_DRAW 1
 #define I_CURSOR_SET_POS 2
 #define I_CURSOR_SET_COLOR 3
 #define I_CURSOR_ERASE 4
+#define I_SET_PIECE 5
+#define I_CLEAR_BOARD 6
+
+#define STARTUP 3
 
 struct LightsController{
   HardwareSerial *coms;
   bool blocking;
-  uint8_t cursorX = 0;
-  uint8_t cursorY = 0;
+  uint8_t cursorX = 255;
+  uint8_t cursorY = 255;
+  bool needsUpdate = true;
   
   LightsController(HardwareSerial *serial){
     coms = serial;
@@ -50,11 +56,13 @@ struct LightsController{
 
   void setCursorPos(uint8_t x, uint8_t y){
     if (x != cursorX || y != cursorY){
+      cursorX = x;
+      cursorY = y;
       coms -> write(INSTANT);
       coms -> write(I_CURSOR_SET_POS);
       coms -> write(x);
       coms -> write(y);
-      drawCursor();
+      needsUpdate = true;
     }
   }
 
@@ -62,41 +70,49 @@ struct LightsController{
     coms -> write(INSTANT);
     coms -> write(I_CURSOR_SET_COLOR);
     coms -> write(color);
-    drawCursor();
+    needsUpdate = true;
+  }
+
+  void setPiece(bool turn, uint8_t x, uint8_t y){
+    coms -> write(INSTANT);
+    coms -> write(I_SET_PIECE);
+    coms -> write(x);
+    coms -> write(y);
+    coms -> write(turn);
+    waitUntilFinished();
+  }
+
+  void startup(){
+    bool trying = true;
+    while (trying){
+      coms -> write(STARTUP); // Wait for synchronization.
+      if (coms -> available() && coms -> read() == 1){
+        trying = false;
+      }
+      delay(500);
+    }
     waitUntilFinished();
   }
 
   void drawCursor(){
+    if (needsUpdate){
+      coms -> write(INSTANT);
+      coms -> write(I_CURSOR_DRAW);
+      needsUpdate = false;
+    }
+  }
+
+  void eraseCursor(){
     coms -> write(INSTANT);
     coms -> write(I_CURSOR_ERASE);
-    waitUntilFinished(); // So we don't have buffer overflow
+  }
+
+  void clearBoard(){
     coms -> write(INSTANT);
-    coms -> write(I_CURSOR_DRAW);
+    coms -> write(I_CLEAR_BOARD);
+    Serial.println("Shittin' Poopin'");
   }
 };
-
-
-struct BetterLightsController{ // Finally gonna cave and make something better than that ^ piece of crap. 'Tis going to be something like TCP:
-  // First, I send a "want to send command", then wait for it to send an "ok, I'm ready" response. If it doesn't give "OK, I'm ready" in time or gives something else,
-  // I will wait the very short cooldown period then try again. When it finally works, send a byte for the type of action. If it has fields, wait for it to say "OK, need fields"
-  // Then I will send fields as a char*.
-  HardwareSerial *coms;
-  uint8_t stage = 0;
-  
-  BetterLightsController(HardwareSerial *serial){
-    coms = serial;
-  }
-  
-  bool beginHandshake(){
-    coms.write(1);
-    while (!coms.available());
-    if (coms.read() == 1){
-      stage = 1;
-      return true;
-    }
-    return false;
-  }
-}
 
 
 struct NeoPixelController{

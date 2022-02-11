@@ -214,7 +214,6 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
           }
         }
         if (timingOff && !(millis() < (theTime + timeoutPoint))){
-          while(!Serial);
           hardfault("motor.h::Motor::zeroTwo::while.0::if.3");
           while(1);
         }
@@ -261,7 +260,6 @@ class Motor{ // Reserve the class name Motor. Redefinition will wonk.
     
     void run(int runSpeed = 0){ // 20 microsecond pulse
       if (metrics){
-        Serial.println("Running");
       }
       long distance = getDistance();
       if (hasSlave){
