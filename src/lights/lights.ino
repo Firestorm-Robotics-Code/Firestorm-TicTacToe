@@ -241,7 +241,7 @@ void loop(){
       }
       else if (d == 3){
         Serial.println("Flappy boi");
-        pixels.setBrightness(5); // 25%, I think
+        pixels.setBrightness(5);
         coms.write(1); // Notify that synchronization is ready. Cannot happen without the 3 second animation happening first.
         setRing(0, 0, white);
         pixels.show();

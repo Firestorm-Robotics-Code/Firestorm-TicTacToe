@@ -222,8 +222,6 @@ struct JoystickController : Controller {
       game -> headY ++;
       if (konami == 4 || konami == 5){
         konami ++;
-        Serial.println("Hur hur 4");
-        game -> cheat();
       }
       else{
         konami = 0;

@@ -89,7 +89,7 @@ struct LightsController{
       if (coms -> available() && coms -> read() == 1){
         trying = false;
       }
-      delay(500);
+      delay(1500);
     }
     waitUntilFinished();
   }
@@ -110,7 +110,6 @@ struct LightsController{
   void clearBoard(){
     coms -> write(INSTANT);
     coms -> write(I_CLEAR_BOARD);
-    Serial.println("Shittin' Poopin'");
   }
 };
 

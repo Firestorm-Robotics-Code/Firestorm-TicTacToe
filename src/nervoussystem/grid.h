@@ -96,15 +96,21 @@ public:
     ymotor -> zero(400);
   }
   void cheat(bool turn){
-    moveToAPiece(turn);
+    /*moveToAPiece(turn);
     magnetOn();
+    if (turn){
+      XPiecesLeft ++;
+    }
+    else{
+      OPiecesLeft ++;
+    }
     if (findEmptySlot(theType)){
       xmotor -> setGoal(theRealPositionX);
       ymotor -> setGoal(theRealPositionY);
     }
     runUntilFinished();
     magnetOff();
-    /*if (theType){ // Reverse it. Oh, how I love boolean logic...
+    if (theType){ // Reverse it. Oh, how I love boolean logic...
       XPiecesLeft ++;
     }
     else{
